@@ -9,8 +9,9 @@
 | Menu e comandi in italiano | **Implementati**: `app/src/main/assets/lang/it.json`, 417 stringhe |
 | Avvisi e messaggi di sicurezza in italiano | **Tradotti**; verifica della resa su Android ancora necessaria |
 | Ricette ufficiali in italiano | **Non ancora garantite**: origine e lingua del catalogo devono essere verificate |
-| Entità Home Assistant | **Non implementate** |
-| Pubblicazione MQTT e MQTT Discovery | **Non implementate** |
+| Entità Home Assistant effettivamente esposte | **Non ancora disponibili**; lo schema ne descrive 9 |
+| Schema MQTT Discovery e payload telemetrico | **Implementati nel core**; non ancora connessi alla macchina o a un broker |
+| Client MQTT e pubblicazione reale | **Non implementati** |
 | APK italiano verificato | **Non ancora compilato o collaudato** |
 | Root/installazione sul robot | **Non eseguiti** |
 
@@ -44,7 +45,7 @@ L'eventuale riuso e redistribuzione dei testi delle ricette deve rispettare i di
 
 ## Obiettivo Home Assistant: MQTT read-only
 
-Architettura prevista, **ancora da implementare e testare**:
+Architettura prevista, **non ancora operativa**. Sono stati aggiunti lo schema JSON, nove definizioni MQTT Discovery e test automatici, ma manca ancora il collegamento ai dati di Toque e un client MQTT reale:
 
 ```text
 Controller motore / bilancia
@@ -59,7 +60,7 @@ Pubblicatore MQTT read-only ───► Broker MQTT ───► Home Assistant
 
 Entità desiderate: temperatura reale e impostata, RPM, velocità, peso, stato motore e riscaldamento, coperchio, errori, disponibilità. Ricetta attiva e tempo residuo richiederanno la lettura dello stato applicativo, non del solo protocollo a 27 byte.
 
-**Vincoli di sicurezza prima dell'implementazione:**
+**Vincoli di sicurezza prima della pubblicazione reale:**
 - pubblicare solo stati, senza topic di comando o esecuzione di messaggi MQTT in ingresso;
 - pubblicatore non bloccante e isolato dal ciclo di controllo; perdita Wi-Fi/broker non deve alterare il funzionamento del robot;
 - disponibilità e scadenza dei campioni, non presentare misure vecchie come attuali;
@@ -87,3 +88,11 @@ La procedura di root può modificare le partizioni di avvio del tablet Android i
 - [Licenza del presente repository](LICENSE)
 
 **Nota:** le modifiche locali sono sperimentali, senza garanzia di sicurezza, accuratezza o compatibilità. Nessun APK è stato testato sul robot come parte delle modifiche qui descritte.
+
+## Stato sviluppo MQTT (fase iniziale)
+
+- `core/src/main/kotlin/app/toque/core/mqtt/HaMqttSchema.kt`: conversione di campioni validi in JSON, nove entità e configurazioni Discovery; **non apre connessioni e non controlla la macchina**.
+- `core/src/test/kotlin/app/toque/core/mqtt/HaMqttSchemaTest.kt`: test per JSON, assenza di `command_topic` e freschezza dei campioni.
+- **Da sviluppare**: acquisizione dello snapshot aggiornato dal servizio macchina; coda non bloccante; client MQTT autenticato con LWT; impostazioni di rete; pubblicazione effettiva e prove con un broker.
+
+La disponibilità pubblicata dovrà essere `offline` in caso di disconnessione o perdita di dati. Il modulo definito nel core non pubblica autonomamente lo stato `online`: lo farà il futuro servizio di integrazione solo quando avrà una misura valida e recente.
