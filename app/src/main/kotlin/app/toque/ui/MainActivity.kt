@@ -17,6 +17,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import app.toque.Prefs
+import app.toque.mqtt.HaTelemetryService
 import app.toque.ToqueApp
 import app.toque.core.i18n.I18n
 import app.toque.core.i18n.tr
@@ -86,6 +87,9 @@ class MainActivity : Activity() {
         }
 
         app.machine.connect()
+        if (prefs.mqttEnabled && prefs.mqttHost.isNotBlank()) {
+            startService(Intent(this, HaTelemetryService::class.java))
+        }
         app.recipes.load()
         SyncService.schedule(this)
         push(HomeScreen(this))
