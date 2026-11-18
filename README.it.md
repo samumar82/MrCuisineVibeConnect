@@ -45,7 +45,7 @@ L'eventuale riuso e redistribuzione dei testi delle ricette deve rispettare i di
 
 ## Obiettivo Home Assistant: MQTT read-only
 
-Architettura prevista, **non ancora operativa**. Sono stati aggiunti lo schema JSON, nove definizioni MQTT Discovery e test automatici, ma manca ancora il collegamento ai dati di Toque e un client MQTT reale:
+Architettura prevista, **non ancora operativa**. Sono stati aggiunti lo schema JSON, nove definizioni MQTT Discovery e test automatici, il collegamento ai dati di Toque è stato preparato con un adattatore che valida l'età del campione; mancano client MQTT reale e pubblicazione:
 
 ```text
 Controller motore / bilancia
@@ -93,6 +93,11 @@ La procedura di root può modificare le partizioni di avvio del tablet Android i
 
 - `core/src/main/kotlin/app/toque/core/mqtt/HaMqttSchema.kt`: conversione di campioni validi in JSON, nove entità e configurazioni Discovery; **non apre connessioni e non controlla la macchina**.
 - `core/src/test/kotlin/app/toque/core/mqtt/HaMqttSchemaTest.kt`: test per JSON, assenza di `command_topic` e freschezza dei campioni.
-- **Da sviluppare**: acquisizione dello snapshot aggiornato dal servizio macchina; coda non bloccante; client MQTT autenticato con LWT; impostazioni di rete; pubblicazione effettiva e prove con un broker.
+- `core/src/main/kotlin/app/toque/core/mqtt/HaSnapshotAdapter.kt`: mappa gli snapshot reali/simulati di Toque sui campi telemetrici, scartando campioni assenti o vecchi. Test in `HaSnapshotAdapterTest.kt`.
+- **Da sviluppare**: coda non bloccante; client MQTT autenticato con LWT; impostazioni di rete; pubblicazione effettiva e prove con un broker.
 
 La disponibilità pubblicata dovrà essere `offline` in caso di disconnessione o perdita di dati. Il modulo definito nel core non pubblica autonomamente lo stato `online`: lo farà il futuro servizio di integrazione solo quando avrà una misura valida e recente.
+
+## Manopola fisica del Connect
+
+Il codice originale Toque gestisce gli eventi `KeyEvent` e le rotazioni `MotionEvent.ACTION_SCROLL` della manopola, con mappatura configurabile. Nella cottura manuale: toccare la scheda **Durata**, **Temperatura** o **Velocità** per selezionare il parametro; ruotare la manopola per cambiarlo; premere per avviare e, durante il funzionamento, mettere in pausa. L'uso sul dispositivo reale richiede una verifica dei codici tasto e dei comportamenti. La pressione non passa automaticamente da un parametro all'altro nell'implementazione attuale.
