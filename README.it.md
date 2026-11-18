@@ -131,3 +131,20 @@ I messaggi distinguono:
 Lo stato mostra soltanto categorie di errori; non registra la password né la stampa nella schermata. Il broker e l'integrazione MQTT di Home Assistant **non devono essere rimossi o riconfigurati per questo test**.
 
 Per verificare, usare soltanto **MQTT → Configura → Ascolta un topic** e il filtro `toque_it/mcc/#`. La pagina Zigbee2MQTT non mostrerà Toque: è un client MQTT non Zigbee.
+
+## Controllo remoto da Home Assistant — prima fase sperimentale
+
+Con il nuovo firmware del fork si possono abilitare **esclusivamente in modalità Demo** due pulsanti MQTT Discovery: `Pausa Demo` e `Arresta Demo`. Sono **disattivati per impostazione predefinita**.
+
+Per testarli:
+1. scaricare un APK da una build verde successiva al commit dei comandi, sul **telefono in modalità Demo**;
+2. aprire Impostazioni → Home Assistant · MQTT;
+3. mantenere la pubblicazione MQTT attiva e selezionare **Comandi PAUSA/STOP solo in Demo (sperimentale)**;
+4. premere Salva configurazione MQTT e verificare in Home Assistant il dispositivo Monsieur Cuisine Connect;
+5. avviare *manualmente sul telefono* un programma simulato e premere i nuovi pulsanti HA per metterlo in pausa o arrestarlo.
+
+Il programma **non può essere avviato o ripreso remotamente**. La ricezione dei comandi è disabilitata in `Machine reale` e `Jumeau digitale`, anche se l'utente ha lasciato attiva l'opzione: il software applica un controllo sul modo corrente sia al momento della ricezione sia appena prima della chiamata IPC.
+
+La sottoscrizione MQTT usa soltanto `toque_it/mcc/demo/command`, QoS 0. Scarta messaggi retained e payload diversi da `PAUSE` e `STOP`. All'eventuale passaggio dalla modalità Demo alla modalità reale il codice rifiuta i comandi, ma **questa prima fase non va impiegata come arresto di emergenza di una macchina fisica**.
+
+Prima di valutare un controllo completo sulla macchina reale servono verifiche aggiuntive: autenticazione/TLS, account broker con ACL minime, controllo dell'età dei comandi e duplicati, indicazione dello stato di esecuzione, consenso locale temporaneo e test del comportamento con connessione assente. Un semplice pulsante remoto di avvio del riscaldamento o delle lame non è considerato sicuro.
