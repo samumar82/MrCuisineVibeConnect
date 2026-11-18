@@ -29,6 +29,15 @@ class HaTelemetryService : Service() {
     private var lastDiscovery = 0L
     private var lastState = 0L
     private var lastOnline = false
+    private var lastStatus = ""
+    private var lastErrorAt = 0L
+
+    private fun report(message: String) {
+        if (message == lastStatus) return
+        lastStatus = message
+        prefs.mqttStatus = message
+        prefs.mqttStatusAt = System.currentTimeMillis()
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -36,6 +45,7 @@ class HaTelemetryService : Service() {
         machine = MachineClient(this)
         unsubscribe = machine.onSnapshot { latest = it }
         machine.connect()
+        report("MQTT in avvio: attendo il broker")
         executor.scheduleWithFixedDelay({ tick() }, 0, 2, TimeUnit.SECONDS)
     }
 
@@ -52,6 +62,7 @@ class HaTelemetryService : Service() {
     private fun tick() {
         if (!prefs.mqttEnabled || prefs.mqttHost.isBlank()) {
             closeMqtt()
+            report(if (prefs.mqttEnabled) "MQTT: indirizzo broker mancante" else "MQTT disattivato")
             return
         }
         try {
@@ -62,6 +73,7 @@ class HaTelemetryService : Service() {
                     next.connect(prefs.mqttHost, prefs.mqttPort, prefs.mqttTls,
                         "toque-it-mcc", prefs.mqttUser, prefs.mqttPassword)
                     mqtt = next
+                    report("Broker MQTT connesso: invio Discovery")
                     lastPing = now
                     lastDiscovery = 0L
                     lastState = 0L
@@ -77,6 +89,7 @@ class HaTelemetryService : Service() {
                     client.publish(HaMqttSchema.configTopic(sensor), HaMqttSchema.config(sensor), retain = true)
                 }
                 lastDiscovery = now
+                report("Broker connesso: Discovery inviata, attendo telemetria valida")
             }
             val sample = HaSnapshotAdapter.fromSnapshot(latest, now)
             val valid = sample != null && HaMqttSchema.valid(sample, now)
@@ -88,18 +101,31 @@ class HaTelemetryService : Service() {
                 if (lastState == 0L || now - lastState >= 2_000L) {
                     client.publish(HaMqttSchema.stateTopic, HaMqttSchema.state(sample))
                     lastState = now
+                    report("MQTT OK: stato macchina pubblicato")
                 }
             } else if (lastOnline || lastState == 0L) {
                 client.publish(HaMqttSchema.availabilityTopic, "offline", retain = true)
                 lastOnline = false
                 lastState = now
+                report("Broker connesso: macchina senza campioni validi (offline)")
             }
             if (now - lastPing >= 20_000L) {
                 client.ping()
                 lastPing = now
             }
-        } catch (_: Exception) {
-            // Intentional: a network failure must never propagate to the controller.
+        } catch (e: Exception) {
+            // No secrets in diagnostics; avoid echoing broker exception messages.
+            val reason = when (e) {
+                is java.net.UnknownHostException -> "indirizzo broker non risolto (DNS)"
+                is java.net.ConnectException -> "connessione TCP rifiutata (host/porta)"
+                is java.net.SocketTimeoutException -> "timeout di rete o risposta MQTT mancante"
+                is javax.net.ssl.SSLException -> "errore TLS/certificato o porta errata"
+                is IllegalStateException -> if ((e.message ?: "").startsWith("MQTT connection rejected:")) {
+                    "autenticazione o accesso MQTT rifiutato (CONNACK)"
+                } else "handshake MQTT fallito"
+                else -> "errore MQTT (" + e.javaClass.simpleName + ")"
+            }
+            report("MQTT non connesso: " + reason)
             closeMqtt()
         }
     }
@@ -120,6 +146,7 @@ class HaTelemetryService : Service() {
         executor.shutdownNow()
         unsubscribe?.invoke()
         closeMqtt()
+        report("MQTT arrestato")
         super.onDestroy()
     }
 }
