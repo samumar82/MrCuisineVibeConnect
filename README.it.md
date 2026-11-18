@@ -68,6 +68,10 @@ Entità desiderate: temperatura reale e impostata, RPM, velocità, peso, stato m
 - test con il simulatore e review del codice prima delle prove sul robot;
 - niente lettori seriali concorrenti.
 
+## Installazione sul robot: piano preventivo
+
+Prima di qualsiasi modifica leggere [Piano di installazione e ripristino per SKMC 1200](docs/INSTALLAZIONE-IT-SICURA.md). Il firmware 4922 del dispositivo di destinazione non è stato ancora validato con TWRP/root. Le procedure upstream modificano anche file di sistema Android, quindi un backup di sole partizioni boot/recovery potrebbe non ripristinare ogni modifica. Nessun root o flash è stato eseguito.
+
 ## Build e test
 
 Il progetto usa Gradle/Android e richiede un ambiente Android SDK compatibile:
