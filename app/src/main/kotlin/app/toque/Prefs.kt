@@ -223,4 +223,9 @@ class Prefs(context: Context) {
         get() = p.getLong("mqttStatusAt", 0L)
         set(v) { p.edit().putLong("mqttStatusAt", v).apply() }
 
+    /** Opt-in. Commands are accepted ONLY while the machine is in DEMO mode. */
+    var mqttDemoControlEnabled: Boolean
+        get() = p.getBoolean("mqttDemoControlEnabled", false)
+        set(v) { p.edit().putBoolean("mqttDemoControlEnabled", v).commit() }
+
 }
