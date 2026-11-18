@@ -285,7 +285,7 @@ object McOnline {
      * This is only a UI hint; the user must still review imported machine settings.
      */
     fun mentionsWhisk(text: String): Boolean =
-        Regex("""(?iu)\\b(fouet|farfalla|frusta|whisk|schneebesen)\\b""")
+        Regex("""(?iu)\b(fouet|farfalla|frusta|whisk|schneebesen)\b""")
             .containsMatchIn(text)
 
     /** Texte brut à partir d'un éventuel HTML léger. */
