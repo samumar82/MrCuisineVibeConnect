@@ -5,7 +5,6 @@ import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.net.SocketTimeoutException
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
@@ -72,61 +71,6 @@ internal class MqttPublisher : AutoCloseable {
         utf8(b, topic)
         b.write(payload.toByteArray(Charsets.UTF_8))
         packet(if (retain) 0x31 else 0x30, b.toByteArray())
-    }
-
-
-    /** Subscription only used for explicit DEMO remote pause/stop; QoS 0. */
-    @Synchronized
-    fun subscribe(topic: String) {
-        val payload = ByteArrayOutputStream()
-        payload.write(0); payload.write(1) // packet identifier
-        utf8(payload, topic)
-        payload.write(0) // requested QoS 0
-        packet(0x82, payload.toByteArray())
-    }
-
-    data class Received(val topic: String, val payload: String, val retained: Boolean)
-
-    /**
-     * Process a bounded amount of incoming traffic on the existing network worker.
-     * No incoming data ever runs on the machine-control loop thread.
-     */
-    fun poll(): Received? {
-        val s = socket ?: return null
-        val stream = input ?: return null
-        s.soTimeout = 125
-        val header = try { stream.read() } catch (_: SocketTimeoutException) { return null }
-        if (header == -1) throw IllegalStateException("MQTT socket closed")
-        var length = 0
-        var multiplier = 1
-        repeat(4) {
-            val digit = stream.read()
-            if (digit < 0) throw IllegalStateException("MQTT packet truncated")
-            length += (digit and 127) * multiplier
-            if (digit and 128 == 0) {
-                require(length <= 8192) { "MQTT inbound packet too large" }
-                val body = ByteArray(length)
-                var offset = 0
-                while (offset < length) {
-                    val count = stream.read(body, offset, length - offset)
-                    if (count < 0) throw IllegalStateException("MQTT payload truncated")
-                    offset += count
-                }
-                if (header ushr 4 != 3) return null // SUBACK, PINGRESP, etc.
-                if (length < 2) return null
-                val topicBytes = ((body[0].toInt() and 255) shl 8) or (body[1].toInt() and 255)
-                if (topicBytes + 2 > length) return null
-                // Reject QoS > 0: this safety-limited path is exclusively QoS 0.
-                if ((header and 6) != 0) return null
-                return Received(
-                    String(body, 2, topicBytes, Charsets.UTF_8),
-                    String(body, 2 + topicBytes, length - 2 - topicBytes, Charsets.UTF_8),
-                    header and 1 != 0,
-                )
-            }
-            multiplier *= 128
-        }
-        throw IllegalStateException("MQTT malformed remaining length")
     }
 
     @Synchronized
