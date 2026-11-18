@@ -156,13 +156,8 @@ class SettingsScreen(a: MainActivity) : Screen(a) {
         ha.addView(mqttPassword, Ui.lp(Ui.MATCH, Ui.u(58), t = 8))
         var useTls = a.prefs.mqttTls
         var enableMqtt = a.prefs.mqttEnabled
-        var enableDemoControls = a.prefs.mqttDemoControlEnabled
         ha.addView(toggle("Connessione TLS (consigliata)", useTls) { useTls = it }, Ui.lp(t = 8))
         ha.addView(toggle("Pubblica sensori su Home Assistant", enableMqtt) { enableMqtt = it }, Ui.lp(t = 8))
-        ha.addView(toggle("Comandi PAUSA/STOP solo in Demo (sperimentale)",
-            enableDemoControls) { enableDemoControls = it }, Ui.lp(t = 8))
-        ha.addView(Ui.text(c, "Non permette di avviare il motore o il riscaldamento. In modalità Macchina reale i comandi sono ignorati.",
-            14f, Ui.TEXT3), Ui.lp(t = 4))
         val mqttStatusText = Ui.text(c, a.prefs.mqttStatus, 15f, Ui.TEXT2).apply {
             setLineSpacing(0f, 1.12f)
         }
@@ -187,7 +182,6 @@ class SettingsScreen(a: MainActivity) : Screen(a) {
                 a.prefs.mqttTls = useTls
                 a.prefs.mqttUser = mqttUser.text.toString().trim()
                 a.prefs.mqttPassword = mqttPassword.text.toString()
-                a.prefs.mqttDemoControlEnabled = enableDemoControls
                 a.prefs.mqttEnabled = enableMqtt
                 if (enableMqtt) a.startService(Intent(a, HaTelemetryService::class.java))
                 a.toast(if (enableMqtt) "MQTT abilitato: controlla Home Assistant." else "MQTT disabilitato.", Ui.OK)
