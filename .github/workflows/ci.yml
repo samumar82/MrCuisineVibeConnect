@@ -1,0 +1,44 @@
+name: Validate Italian fork
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Check Italian JSON translations
+        run: |
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+          root = Path("app/src/main/assets/lang")
+          en = json.loads((root / "en.json").read_text(encoding="utf-8"))
+          it = json.loads((root / "it.json").read_text(encoding="utf-8"))
+          assert set(it) == set(en), "Italian file must contain exactly the same keys as English"
+          pat = re.compile(r"%(?:\d+\$)?[-#+ 0,(]*\d*(?:\.\d+)?[a-zA-Z%]")
+          for k, v in it.items():
+              assert isinstance(v, str) and v, f"Empty translation: {k!r}"
+              assert pat.findall(k) == pat.findall(v), f"Placeholder mismatch: {k!r}"
+          assert it["_name"] == "Italiano"
+          print(f"Italian translation validated: {len(it)-1} UI strings")
+          PY
+      - name: Kotlin unit tests and Android debug APK
+        run: ./gradlew --no-daemon :core:test :app:assembleDebug
+      - name: Save debug APK (testing only)
+        uses: actions/upload-artifact@v4
+        with:
+          name: toque-it-debug-UNTESTED
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
