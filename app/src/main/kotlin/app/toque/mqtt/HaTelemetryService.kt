@@ -3,6 +3,8 @@ package app.toque.mqtt
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.os.Handler
+import android.os.Looper
 import app.toque.Prefs
 import app.toque.core.machine.Snapshot
 import app.toque.core.mqtt.HaMqttSchema
@@ -17,6 +19,7 @@ import java.util.concurrent.TimeUnit
  * There is no MQTT subscription and no command ingress.
  */
 class HaTelemetryService : Service() {
+    private val main = Handler(Looper.getMainLooper())
     private lateinit var prefs: Prefs
     private lateinit var machine: MachineClient
     private val executor = Executors.newSingleThreadScheduledExecutor { task ->
@@ -77,6 +80,7 @@ class HaTelemetryService : Service() {
                     lastDiscovery = 0L
                     lastState = 0L
                     lastOnline = false
+                    if (demoControlsAllowed()) next.subscribe(HaMqttSchema.demoCommandTopic())
                 } catch (e: Exception) {
                     next.close()
                     throw e
@@ -86,6 +90,14 @@ class HaTelemetryService : Service() {
             if (lastDiscovery == 0L || now - lastDiscovery >= 15 * 60_000L) {
                 for (sensor in HaMqttSchema.sensors) {
                     client.publish(HaMqttSchema.configTopic(sensor), HaMqttSchema.config(sensor), retain = true)
+                }
+                // Empty retained configs remove Demo buttons when remote control is disabled.
+                for (button in HaMqttSchema.demoButtons) {
+                    client.publish(
+                        HaMqttSchema.demoButtonConfigTopic(button),
+                        if (demoControlsAllowed()) HaMqttSchema.demoButtonConfig(button) else "",
+                        retain = true,
+                    )
                 }
                 lastDiscovery = now
                 report("Broker connesso: Discovery inviata, attendo telemetria valida")
@@ -108,6 +120,7 @@ class HaTelemetryService : Service() {
                 lastState = now
                 report("Broker connesso: macchina senza campioni validi (offline)")
             }
+            client.poll()?.let { command -> handleDemoCommand(command) }
             if (now - lastPing >= 20_000L) {
                 client.ping()
                 lastPing = now
@@ -126,6 +139,23 @@ class HaTelemetryService : Service() {
             }
             report("MQTT non connesso: " + reason)
             closeMqtt()
+        }
+    }
+
+    private fun demoControlsAllowed(): Boolean =
+        prefs.mqttDemoControlEnabled && prefs.mode == Prefs.Mode.DEMO && prefs.mqttEnabled
+
+    /** Never execute remote commands in HARDWARE/TWIN mode, even after a mode change. */
+    private fun handleDemoCommand(message: MqttPublisher.Received) {
+        if (!demoControlsAllowed() || message.retained ||
+            message.topic != HaMqttSchema.demoCommandTopic()) return
+        if (message.payload != "PAUSE" && message.payload != "STOP") return
+        main.post {
+            if (!demoControlsAllowed()) return@post
+            val s = machine.snapshot
+            if (!s.hasSample || !s.transportUp) return@post
+            if (message.payload == "PAUSE" && s.running) machine.pause {}
+            else if (message.payload == "STOP" && s.busy) machine.stop {}
         }
     }
 
