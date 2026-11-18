@@ -30,7 +30,6 @@ class HaTelemetryService : Service() {
     private var lastState = 0L
     private var lastOnline = false
     private var lastStatus = ""
-    private var lastErrorAt = 0L
 
     private fun report(message: String) {
         if (message == lastStatus) return
