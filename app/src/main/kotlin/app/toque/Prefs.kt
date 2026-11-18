@@ -189,4 +189,29 @@ class Prefs(context: Context) {
         set(v) {
             p.edit().putInt("guidedStep", v).commit()
         }
+    /** MQTT remains disabled until the owner explicitly enables it. */
+    var mqttEnabled: Boolean
+        get() = p.getBoolean("mqttEnabled", false)
+        set(v) { p.edit().putBoolean("mqttEnabled", v).commit() }
+
+    var mqttHost: String
+        get() = p.getString("mqttHost", "") ?: ""
+        set(v) { p.edit().putString("mqttHost", v).commit() }
+
+    var mqttPort: Int
+        get() = p.getInt("mqttPort", 8883)
+        set(v) { p.edit().putInt("mqttPort", v).commit() }
+
+    var mqttTls: Boolean
+        get() = p.getBoolean("mqttTls", true)
+        set(v) { p.edit().putBoolean("mqttTls", v).commit() }
+
+    var mqttUser: String
+        get() = p.getString("mqttUser", "") ?: ""
+        set(v) { p.edit().putString("mqttUser", v).commit() }
+
+    var mqttPassword: String
+        get() = p.getString("mqttPassword", "") ?: ""
+        set(v) { p.edit().putString("mqttPassword", v).commit() }
+
 }
