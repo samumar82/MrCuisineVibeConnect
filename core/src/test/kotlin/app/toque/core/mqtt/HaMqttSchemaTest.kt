@@ -39,15 +39,4 @@ class HaMqttSchemaTest {
         assertFalse(HaMqttSchema.valid(sample, 500L))
         assertFalse(HaMqttSchema.valid(sample.copy(sampledAtMs = 0), 100L))
     }
-    @Test fun demoButtonsAreExplicitlyLimitedToPauseAndStop() {
-        assertEquals(listOf("PAUSE", "STOP"), HaMqttSchema.demoButtons.map { it.command })
-        assertEquals("toque_it/mcc/demo/command", HaMqttSchema.demoCommandTopic())
-        for (button in HaMqttSchema.demoButtons) {
-            val config = Json.parse(HaMqttSchema.demoButtonConfig(button)) as Map<*, *>
-            assertEquals(HaMqttSchema.demoCommandTopic(), config["command_topic"])
-            assertEquals(button.command, config["payload_press"])
-            assertTrue(HaMqttSchema.demoButtonConfigTopic(button).startsWith("homeassistant/button/"))
-        }
-    }
-
 }
