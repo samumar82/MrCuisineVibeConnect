@@ -8,7 +8,7 @@
 |---|---|
 | Menu e comandi in italiano | **Implementati**: `app/src/main/assets/lang/it.json`, 417 stringhe |
 | Avvisi e messaggi di sicurezza in italiano | **Tradotti**; verifica della resa su Android ancora necessaria |
-| Ricette ufficiali in italiano | **Non ancora garantite**: origine e lingua del catalogo devono essere verificate |
+| Ricette ufficiali in italiano | **Confermate nella Demo**: sincronizzazione e visualizzazione in italiano verificate dall'utente |
 | Entità Home Assistant effettivamente esposte | **9 definite, pubblicazione sperimentale implementata**; comparsa in HA da verificare |
 | Schema MQTT Discovery e payload telemetrico | **Implementati nel core**; non ancora connessi alla macchina o a un broker |
 | Client MQTT e pubblicazione reale | **Implementati in versione sperimentale**, da validare con broker e APK |
@@ -152,3 +152,9 @@ Prima di valutare un controllo completo sulla macchina reale servono verifiche a
 ### Test di regressione controllo Demo
 
 Il test `DemoCommandPolicyTest` verifica che soltanto `PAUSE` e `STOP` siano autorizzati con consenso esplicito, in Demo, con dati recenti e su topic esatto. Le varianti retained, disabilitate, senza campioni, in modalità Hardware/Twin e i comandi `START`/`RESUME` vengono rifiutati.
+
+## Verifica ricette italiane (18 novembre 2026)
+
+Test nella Demo Android: l'utente ha scaricato il catalogo ufficiale e verificato che le ricette sono visualizzate in italiano. Il client usa `Accept-Language: it-IT` tramite `McOnline.languageFor("it")`. **Non occorre tradurre automaticamente il catalogo ufficiale**: il contenuto viene recuperato dalla fonte già localizzata. Il catalogo non è incluso in questo repository.
+
+È stata aggiunta una protezione per riconoscere anche la dicitura italiana *farfalla* o *frusta* nella conversione degli accessori indicati dalle ricette. Non vengono modificati tempi, temperature o velocità. È comunque obbligatoria la revisione dei passaggi importati prima di azionare una macchina fisica.
