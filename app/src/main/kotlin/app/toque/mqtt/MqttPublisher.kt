@@ -117,7 +117,7 @@ internal class MqttPublisher : AutoCloseable {
                 val topicBytes = ((body[0].toInt() and 255) shl 8) or (body[1].toInt() and 255)
                 if (topicBytes + 2 > length) return null
                 // Reject QoS > 0: this safety-limited path is exclusively QoS 0.
-                if (header and 6 != 0) return null
+                if ((header and 6) != 0) return null
                 return Received(
                     String(body, 2, topicBytes, Charsets.UTF_8),
                     String(body, 2 + topicBytes, length - 2 - topicBytes, Charsets.UTF_8),
