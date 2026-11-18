@@ -63,36 +63,6 @@ object HaMqttSchema {
         Sensor("board_error_code", "Codice errore"),
     )
 
-
-    /** Explicit DEMO-only, opt-in controls; never start/resume motor or heater. */
-    data class DemoButton(val key: String, val name: String, val command: String)
-
-    val demoButtons = listOf(
-        DemoButton("demo_pause", "Pausa Demo", "PAUSE"),
-        DemoButton("demo_stop", "Arresta Demo", "STOP"),
-    )
-
-    fun demoCommandTopic(): String = "$prefix/demo/command"
-
-    fun demoButtonConfigTopic(button: DemoButton): String =
-        "homeassistant/button/toque_it_mcc_${button.key}/config"
-
-    fun demoButtonConfig(button: DemoButton): String = Json.write(linkedMapOf(
-        "name" to button.name,
-        "unique_id" to "toque_it_mcc_${button.key}",
-        "command_topic" to demoCommandTopic(),
-        "payload_press" to button.command,
-        "availability_topic" to availabilityTopic,
-        "payload_available" to "online",
-        "payload_not_available" to "offline",
-        "device" to linkedMapOf(
-            "identifiers" to listOf("toque_it_mcc"),
-            "name" to "Monsieur Cuisine Connect",
-            "manufacturer" to "SilverCrest",
-            "model" to "SKMC 1200 / Toque IT",
-        ),
-    ))
-
     fun configTopic(sensor: Sensor): String =
         "homeassistant/${if (sensor.binary) "binary_sensor" else "sensor"}/toque_it_mcc_${sensor.key}/config"
 
