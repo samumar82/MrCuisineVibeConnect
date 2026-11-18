@@ -51,6 +51,11 @@
             android:stopWithTask="false" />
 
         <service
+            android:name=".mqtt.HaTelemetryService"
+            android:exported="false"
+            android:stopWithTask="false" />
+
+        <service
             android:name=".recipes.SyncService"
             android:exported="false" />
 
