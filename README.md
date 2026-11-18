@@ -1,6 +1,6 @@
 # MrCuisineVibeConnect
 
-🇫🇷 **[Version française](README.fr.md)**
+🇮🇹 **[Versione italiana e roadmap Home Assistant](README.it.md)** · 🇫🇷 **[Version française](README.fr.md)**
 
 **Toque** is a fast, modern replacement interface for the Lidl **Monsieur Cuisine Connect**
 kitchen robot (SKMC 1200). It runs on the robot's own tablet instead of the stock app and still
@@ -11,7 +11,7 @@ uses **the official Lidl recipes**.
 > Android 6) since October 2026, but has only been tried on that one. Use at your own risk and
 > follow the first-run procedure.
 >
-> The interface is available in **English** and **French** (*Settings › Langue · Language*), and
+> The interface is available in **English**, **French** and **Italian** (*Settings › Langue · Language*), and
 > other languages can be added with a single file (see below).
 
 ## Install with an AI agent
