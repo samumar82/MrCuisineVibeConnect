@@ -267,7 +267,7 @@ object McOnline {
                     speed = speed,
                     tempC = (st.int("temperature") ?: 0).coerceAtLeast(0),
                     reverse = reverse,
-                    accessory = if (text.lowercase().contains("fouet") && speed <= 4) Accessory.WHISK else Accessory.BLADE,
+                    accessory = if (speed <= 4 && mentionsWhisk(text)) Accessory.WHISK else Accessory.BLADE,
                 )
             }
             mode == "turbo" -> StepMachine(program = StepProgram.TURBO, seconds = seconds, pulses = maxOf(1, seconds))
@@ -277,6 +277,16 @@ object McOnline {
             else -> null
         }
     }
+
+    /**
+     * The official recipe text can be localized. French-only accessory detection would
+     * miss Italian "farfalla"/"frusta" and select the wrong attachment in guided steps.
+     * Match whole words to avoid treating unrelated ingredient names as accessories.
+     * This is only a UI hint; the user must still review imported machine settings.
+     */
+    fun mentionsWhisk(text: String): Boolean =
+        Regex("""(?iu)\\b(fouet|farfalla|frusta|whisk|schneebesen)\\b""")
+            .containsMatchIn(text)
 
     /** Texte brut à partir d'un éventuel HTML léger. */
     fun plain(html: String?): String? {
