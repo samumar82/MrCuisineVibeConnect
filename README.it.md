@@ -116,3 +116,18 @@ Il codice originale Toque gestisce gli eventi `KeyEvent` e le rotazioni `MotionE
 L'implementazione attuale usa il client ID `toque-it-mcc` e ID entità fissi: **eseguire una sola istanza alla volta**, altrimenti le due app si disconnetteranno a vicenda. Il publisher non si sottoscrive a topic MQTT e non accetta comandi di cottura. Le credenziali sono memorizzate nelle preferenze private Android, non nel repository; per ambienti non fidati è necessario TLS.
 
 **Limiti sperimentali:** il protocollo QoS 0 non garantisce la consegna di ogni singolo messaggio; la connessione e l'eventuale LWT dipendono dal broker. Occorrono ancora test reali sul sistema di Home Assistant e test di affidabilità prima di uso in cucina.
+
+## Diagnostica MQTT (novembre 2026)
+
+Nelle impostazioni **Home Assistant · MQTT** compare il campo di stato e il pulsante **Aggiorna stato MQTT**. Serve a diagnosticare il problema riscontrato con la prima Demo, in cui nessun messaggio `toque_it/mcc/#` era visibile nel broker.
+
+I messaggi distinguono:
+- **connessione TCP rifiutata**: host, porta, firewall o servizio Mosquitto;
+- **errore TLS**: certificato non attendibile, nome host errato o TLS usato sulla porta senza TLS;
+- **autenticazione MQTT rifiutata**: credenziali o autorizzazioni sul broker;
+- **Discovery inviata**: connessione stabilita, configurazioni inviate, ma telemetria non ancora valida;
+- **MQTT OK: stato macchina pubblicato**: un messaggio di stato è stato consegnato allo stack di rete locale (non equivale a conferma di ricezione del broker con QoS 0).
+
+Lo stato mostra soltanto categorie di errori; non registra la password né la stampa nella schermata. Il broker e l'integrazione MQTT di Home Assistant **non devono essere rimossi o riconfigurati per questo test**.
+
+Per verificare, usare soltanto **MQTT → Configura → Ascolta un topic** e il filtro `toque_it/mcc/#`. La pagina Zigbee2MQTT non mostrerà Toque: è un client MQTT non Zigbee.
