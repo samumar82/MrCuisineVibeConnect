@@ -22,9 +22,8 @@ object HaSnapshotAdapter {
             // Snapshot exposes the target in degrees C.
             targetTemperatureC = s.targetTempC,
             actualRpm = s.rpm,
-            // Toque's jobSpeed is a speed LEVEL (0..10), not target RPM.
-            // Do not relabel this as target RPM.
-            targetRpm = null,
+            // Toque exposes the selected speed as a level (0..10), not target RPM.
+            speedLevel = s.jobSpeed,
             weightG = s.weightG,
             motorRunning = s.motorOn,
             heaterRunning = s.heaterOn,
