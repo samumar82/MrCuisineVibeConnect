@@ -1,6 +1,8 @@
 package app.toque.ui.screens
 
 import android.content.Intent
+import android.content.Context
+import app.toque.mqtt.HaTelemetryService
 import android.graphics.drawable.ColorDrawable
 import android.text.InputType
 import android.util.TypedValue
@@ -134,6 +136,46 @@ class SettingsScreen(a: MainActivity) : Screen(a) {
         b2.addView(Ui.button(c, tr("Ouvrir l'appli d'origine"), Ui.Style.GHOST, Icon.Kind.LINK, height = 52) { a.openVendorApp() })
         lidl.addView(b2, Ui.lp(t = 6))
         lidl.addView(toggle(tr("Synchro automatique chaque nuit"), a.prefs.autoSync) { a.prefs.autoSync = it }, Ui.lp(t = 10))
+
+        // ---- Home Assistant MQTT (no control commands; user opt-in)
+        val ha = section(right, "Home Assistant · MQTT", Icon.Kind.LINK)
+        ha.addView(Ui.text(c, "Solo sensori: nessun comando di cottura da Home Assistant.",
+            15f, Ui.TEXT2), Ui.lp(t = 4))
+        val mqttHost = field(a.prefs.mqttHost, "IP o hostname broker")
+        ha.addView(mqttHost, Ui.lp(Ui.MATCH, Ui.u(58), t = 8))
+        val mqttPort = field(a.prefs.mqttPort.toString(), "Porta (1883 o 8883)").apply {
+            inputType = InputType.TYPE_CLASS_NUMBER
+        }
+        ha.addView(mqttPort, Ui.lp(Ui.MATCH, Ui.u(58), t = 8))
+        val mqttUser = field(a.prefs.mqttUser, "Utente MQTT")
+        ha.addView(mqttUser, Ui.lp(Ui.MATCH, Ui.u(58), t = 8))
+        val mqttPassword = field(a.prefs.mqttPassword, "Password MQTT").apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setSelection(text.length)
+        }
+        ha.addView(mqttPassword, Ui.lp(Ui.MATCH, Ui.u(58), t = 8))
+        var useTls = a.prefs.mqttTls
+        var enableMqtt = a.prefs.mqttEnabled
+        ha.addView(toggle("Connessione TLS (consigliata)", useTls) { useTls = it }, Ui.lp(t = 8))
+        ha.addView(toggle("Pubblica sensori su Home Assistant", enableMqtt) { enableMqtt = it }, Ui.lp(t = 8))
+        ha.addView(Ui.button(c, "Salva configurazione MQTT", Ui.Style.PRIMARY, Icon.Kind.CHECK, height = 58) {
+            val portValue = mqttPort.text.toString().toIntOrNull()
+            if (enableMqtt && (mqttHost.text.toString().trim().isBlank() ||
+                    portValue == null || portValue !in 1..65535)) {
+                a.toast("Inserisci un broker e una porta validi.", Ui.WARN)
+            } else {
+                a.prefs.mqttEnabled = false
+                a.stopService(Intent(a, HaTelemetryService::class.java))
+                a.prefs.mqttHost = mqttHost.text.toString().trim()
+                a.prefs.mqttPort = portValue ?: 8883
+                a.prefs.mqttTls = useTls
+                a.prefs.mqttUser = mqttUser.text.toString().trim()
+                a.prefs.mqttPassword = mqttPassword.text.toString()
+                a.prefs.mqttEnabled = enableMqtt
+                if (enableMqtt) a.startService(Intent(a, HaTelemetryService::class.java))
+                a.toast(if (enableMqtt) "MQTT abilitato: controlla Home Assistant." else "MQTT disabilitato.", Ui.OK)
+            }
+        }, Ui.lp(Ui.WRAP, Ui.WRAP, t = 12))
 
         // ---- Mises à jour
         val updates = section(left, tr("Mises à jour"), Icon.Kind.INFO)
