@@ -144,4 +144,20 @@ class I18nTest {
         assertEquals("Einstellungen", tr("Réglages"))
         assertEquals("Recettes", tr("Recettes"))
     }
+    @Test fun italianIsCompleteAndPreservesParameters() {
+        val languages = languageFiles()
+        val italian = languages.first { it.code == "it" }
+        val english = languages.first { it.code == "en" }
+        assertEquals("Italiano", italian.name)
+        assertEquals("it.json must cover the same source keys as en.json", english.texts.keys, italian.texts.keys)
+        val wrong = italian.texts.filter { (key, translation) -> params(key) != params(translation) }
+        assertTrue("Italian placeholders changed: " + wrong.keys.joinToString(), wrong.isEmpty())
+        I18n.install(languages)
+        assertEquals("it", I18n.resolve("auto", "it-IT").code)
+        I18n.select("it")
+        assertEquals("Impostazioni", tr("Réglages"))
+        assertEquals("Durante il riscaldamento, velocità massima 3",
+            tr("En chauffe, vitesse %d maximum", 3))
+    }
+
 }
