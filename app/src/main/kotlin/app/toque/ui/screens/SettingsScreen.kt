@@ -158,6 +158,17 @@ class SettingsScreen(a: MainActivity) : Screen(a) {
         var enableMqtt = a.prefs.mqttEnabled
         ha.addView(toggle("Connessione TLS (consigliata)", useTls) { useTls = it }, Ui.lp(t = 8))
         ha.addView(toggle("Pubblica sensori su Home Assistant", enableMqtt) { enableMqtt = it }, Ui.lp(t = 8))
+        val mqttStatusText = Ui.text(c, a.prefs.mqttStatus, 15f, Ui.TEXT2).apply {
+            setLineSpacing(0f, 1.12f)
+        }
+        ha.addView(mqttStatusText, Ui.lp(t = 12))
+        ha.addView(Ui.button(c, "Aggiorna stato MQTT", Ui.Style.SECONDARY, Icon.Kind.SYNC, height = 48) {
+            val statusPrefs = Prefs(c)
+            val age = if (statusPrefs.mqttStatusAt > 0L)
+                (System.currentTimeMillis() - statusPrefs.mqttStatusAt) / 1000L else -1L
+            mqttStatusText.text = statusPrefs.mqttStatus +
+                if (age >= 0L) " (aggiornato ${age}s fa)" else ""
+        }, Ui.lp(Ui.WRAP, Ui.WRAP, t = 6))
         ha.addView(Ui.button(c, "Salva configurazione MQTT", Ui.Style.PRIMARY, Icon.Kind.CHECK, height = 58) {
             val portValue = mqttPort.text.toString().toIntOrNull()
             if (enableMqtt && (mqttHost.text.toString().trim().isBlank() ||
