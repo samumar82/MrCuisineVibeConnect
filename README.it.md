@@ -9,9 +9,9 @@
 | Menu e comandi in italiano | **Implementati**: `app/src/main/assets/lang/it.json`, 417 stringhe |
 | Avvisi e messaggi di sicurezza in italiano | **Tradotti**; verifica della resa su Android ancora necessaria |
 | Ricette ufficiali in italiano | **Non ancora garantite**: origine e lingua del catalogo devono essere verificate |
-| Entità Home Assistant effettivamente esposte | **Non ancora disponibili**; lo schema ne descrive 9 |
+| Entità Home Assistant effettivamente esposte | **9 definite, pubblicazione sperimentale implementata**; comparsa in HA da verificare |
 | Schema MQTT Discovery e payload telemetrico | **Implementati nel core**; non ancora connessi alla macchina o a un broker |
-| Client MQTT e pubblicazione reale | **Non implementati** |
+| Client MQTT e pubblicazione reale | **Implementati in versione sperimentale**, da validare con broker e APK |
 | APK italiano verificato | **Non ancora compilato o collaudato** |
 | Root/installazione sul robot | **Non eseguiti** |
 
@@ -94,10 +94,25 @@ La procedura di root può modificare le partizioni di avvio del tablet Android i
 - `core/src/main/kotlin/app/toque/core/mqtt/HaMqttSchema.kt`: conversione di campioni validi in JSON, nove entità e configurazioni Discovery; **non apre connessioni e non controlla la macchina**.
 - `core/src/test/kotlin/app/toque/core/mqtt/HaMqttSchemaTest.kt`: test per JSON, assenza di `command_topic` e freschezza dei campioni.
 - `core/src/main/kotlin/app/toque/core/mqtt/HaSnapshotAdapter.kt`: mappa gli snapshot reali/simulati di Toque sui campi telemetrici, scartando campioni assenti o vecchi. Test in `HaSnapshotAdapterTest.kt`.
-- **Da sviluppare**: coda non bloccante; client MQTT autenticato con LWT; impostazioni di rete; pubblicazione effettiva e prove con un broker.
+- `app/src/main/kotlin/app/toque/mqtt/MqttPublisher.kt`: client MQTT 3.1.1 QoS 0 in sola pubblicazione; TLS opzionale e LWT `offline` retained.
+- `app/src/main/kotlin/app/toque/mqtt/HaTelemetryService.kt`: servizio indipendente che acquisisce gli stati via `MachineClient`, pubblica Discovery/telemetria e marca offline i campioni non più validi; lavora su un thread separato.
+- **Da verificare**: build e prova con broker reale, disconnessioni, reconnect, persistenza, comportamento quando l’interfaccia viene chiusa.
 
 La disponibilità pubblicata dovrà essere `offline` in caso di disconnessione o perdita di dati. Il modulo definito nel core non pubblica autonomamente lo stato `online`: lo farà il futuro servizio di integrazione solo quando avrà una misura valida e recente.
 
 ## Manopola fisica del Connect
 
 Il codice originale Toque gestisce gli eventi `KeyEvent` e le rotazioni `MotionEvent.ACTION_SCROLL` della manopola, con mappatura configurabile. Nella cottura manuale: toccare la scheda **Durata**, **Temperatura** o **Velocità** per selezionare il parametro; ruotare la manopola per cambiarlo; premere per avviare e, durante il funzionamento, mettere in pausa. L'uso sul dispositivo reale richiede una verifica dei codici tasto e dei comportamenti. La pressione non passa automaticamente da un parametro all'altro nell'implementazione attuale.
+
+## Come attivare MQTT in modalità Demo
+
+1. Installa l'APK generato dal workflow **Validate Italian fork** soltanto dopo una build verde, su **telefono Android in modalità Demo**.
+2. Vai su **Impostazioni → Home Assistant · MQTT** e inserisci IP del broker, porta, utente e password.
+3. **TLS attivo (predefinito)** usa normalmente la porta **8883** e richiede un certificato TLS valido per l'host. La porta **1883 senza TLS** va usata soltanto su una LAN fidata: username e password viaggiano in chiaro.
+4. Attiva *Pubblica sensori su Home Assistant* e premi *Salva configurazione MQTT*.
+5. Verifica che Home Assistant disponga dell'integrazione MQTT, e che il broker consenta di pubblicare sui topic `homeassistant/#` e `toque_it/mcc/#`.
+6. Attendi la comparsa del dispositivo *Monsieur Cuisine Connect*. Le nove entità rappresentano soltanto la **macchina simulata del telefono**. Non attivare Toque sul robot durante questa prova.
+
+L'implementazione attuale usa il client ID `toque-it-mcc` e ID entità fissi: **eseguire una sola istanza alla volta**, altrimenti le due app si disconnetteranno a vicenda. Il publisher non si sottoscrive a topic MQTT e non accetta comandi di cottura. Le credenziali sono memorizzate nelle preferenze private Android, non nel repository; per ambienti non fidati è necessario TLS.
+
+**Limiti sperimentali:** il protocollo QoS 0 non garantisce la consegna di ogni singolo messaggio; la connessione e l'eventuale LWT dipendono dal broker. Occorrono ancora test reali sul sistema di Home Assistant e test di affidabilità prima di uso in cucina.
