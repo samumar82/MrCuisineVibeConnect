@@ -148,3 +148,7 @@ Il programma **non può essere avviato o ripreso remotamente**. La ricezione dei
 La sottoscrizione MQTT usa soltanto `toque_it/mcc/demo/command`, QoS 0. Scarta messaggi retained e payload diversi da `PAUSE` e `STOP`. All'eventuale passaggio dalla modalità Demo alla modalità reale il codice rifiuta i comandi, ma **questa prima fase non va impiegata come arresto di emergenza di una macchina fisica**.
 
 Prima di valutare un controllo completo sulla macchina reale servono verifiche aggiuntive: autenticazione/TLS, account broker con ACL minime, controllo dell'età dei comandi e duplicati, indicazione dello stato di esecuzione, consenso locale temporaneo e test del comportamento con connessione assente. Un semplice pulsante remoto di avvio del riscaldamento o delle lame non è considerato sicuro.
+
+### Test di regressione controllo Demo
+
+Il test `DemoCommandPolicyTest` verifica che soltanto `PAUSE` e `STOP` siano autorizzati con consenso esplicito, in Demo, con dati recenti e su topic esatto. Le varianti retained, disabilitate, senza campioni, in modalità Hardware/Twin e i comandi `START`/`RESUME` vengono rifiutati.
