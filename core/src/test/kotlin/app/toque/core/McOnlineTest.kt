@@ -112,6 +112,17 @@ class McOnlineTest {
         assertNotNull(McOnline.parseRecipe("""{"data":{"recipe":{"id":"2","name":"Vide"}}}"""))
     }
 
+    @Test fun italianRecipeLanguageAndAccessoryHints() {
+        assertEquals("it-IT", McOnline.languageFor("it"))
+        assertEquals("it-IT", McOnline.languageFor("it-IT"))
+        assertEquals("it-IT", McOnline.headers("it-IT")["Accept-Language"])
+        assertTrue(McOnline.mentionsWhisk("Inserire la farfalla nel boccale."))
+        assertTrue(McOnline.mentionsWhisk("Montare con la frusta."))
+        assertTrue(McOnline.mentionsWhisk("Installer le fouet."))
+        assertTrue(!McOnline.mentionsWhisk("Aggiungere le farfalle di pasta."))
+        assertTrue(!McOnline.mentionsWhisk("Mescolare con la lama."))
+    }
+
     @Test fun headersAndUrls() {
         assertEquals("web", McOnline.headers("fr-FR")["device-type"])
         assertEquals("fr-FR", McOnline.languageFor("fr"))
