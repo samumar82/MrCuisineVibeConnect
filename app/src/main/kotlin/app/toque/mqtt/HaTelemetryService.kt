@@ -3,12 +3,9 @@ package app.toque.mqtt
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.os.Handler
-import android.os.Looper
 import app.toque.Prefs
 import app.toque.core.machine.Snapshot
 import app.toque.core.mqtt.HaMqttSchema
-import app.toque.core.mqtt.DemoCommandPolicy
 import app.toque.core.mqtt.HaSnapshotAdapter
 import app.toque.machine.MachineClient
 import java.util.concurrent.Executors
@@ -17,10 +14,9 @@ import java.util.concurrent.TimeUnit
 /**
  * Explicitly opt-in read-only MQTT export. Network operations run on one worker,
  * never on the UI thread and never inside the independent motor-control process.
- * Opt-in MQTT command ingress is restricted to PAUSE/STOP in DEMO mode.
+ * There is no MQTT subscription and no command ingress.
  */
 class HaTelemetryService : Service() {
-    private val main = Handler(Looper.getMainLooper())
     private lateinit var prefs: Prefs
     private lateinit var machine: MachineClient
     private val executor = Executors.newSingleThreadScheduledExecutor { task ->
@@ -81,7 +77,6 @@ class HaTelemetryService : Service() {
                     lastDiscovery = 0L
                     lastState = 0L
                     lastOnline = false
-                    if (demoControlsAllowed()) next.subscribe(HaMqttSchema.demoCommandTopic())
                 } catch (e: Exception) {
                     next.close()
                     throw e
@@ -91,14 +86,6 @@ class HaTelemetryService : Service() {
             if (lastDiscovery == 0L || now - lastDiscovery >= 15 * 60_000L) {
                 for (sensor in HaMqttSchema.sensors) {
                     client.publish(HaMqttSchema.configTopic(sensor), HaMqttSchema.config(sensor), retain = true)
-                }
-                // Empty retained configs remove Demo buttons when remote control is disabled.
-                for (button in HaMqttSchema.demoButtons) {
-                    client.publish(
-                        HaMqttSchema.demoButtonConfigTopic(button),
-                        if (demoControlsAllowed()) HaMqttSchema.demoButtonConfig(button) else "",
-                        retain = true,
-                    )
                 }
                 lastDiscovery = now
                 report("Broker connesso: Discovery inviata, attendo telemetria valida")
@@ -121,7 +108,6 @@ class HaTelemetryService : Service() {
                 lastState = now
                 report("Broker connesso: macchina senza campioni validi (offline)")
             }
-            client.poll()?.let { command -> handleDemoCommand(command) }
             if (now - lastPing >= 20_000L) {
                 client.ping()
                 lastPing = now
@@ -140,32 +126,6 @@ class HaTelemetryService : Service() {
             }
             report("MQTT non connesso: " + reason)
             closeMqtt()
-        }
-    }
-
-    private fun demoControlsAllowed(): Boolean =
-        prefs.mqttDemoControlEnabled && prefs.mode == Prefs.Mode.DEMO && prefs.mqttEnabled
-
-    /** Never execute remote commands in HARDWARE/TWIN mode, even after a mode change. */
-    private fun handleDemoCommand(message: MqttPublisher.Received) {
-        fun authorize(): DemoCommandPolicy.Action? {
-            val s = machine.snapshot
-            return DemoCommandPolicy.authorize(
-                enabled = prefs.mqttDemoControlEnabled && prefs.mqttEnabled,
-                modeKey = prefs.mode.key,
-                sampleFresh = s.hasSample && s.transportUp &&
-                    s.sampleAgeMs in 0L..3_000L,
-                topic = message.topic, payload = message.payload,
-                retained = message.retained,
-            )
-        }
-        if (authorize() == null) return
-        main.post {
-            when (authorize()) {
-                DemoCommandPolicy.Action.PAUSE -> if (machine.snapshot.running) machine.pause {}
-                DemoCommandPolicy.Action.STOP -> if (machine.snapshot.busy) machine.stop {}
-                null -> Unit
-            }
         }
     }
 
