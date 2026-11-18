@@ -8,6 +8,7 @@ import android.os.Looper
 import app.toque.Prefs
 import app.toque.core.machine.Snapshot
 import app.toque.core.mqtt.HaMqttSchema
+import app.toque.core.mqtt.DemoCommandPolicy
 import app.toque.core.mqtt.HaSnapshotAdapter
 import app.toque.machine.MachineClient
 import java.util.concurrent.Executors
@@ -16,7 +17,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Explicitly opt-in read-only MQTT export. Network operations run on one worker,
  * never on the UI thread and never inside the independent motor-control process.
- * There is no MQTT subscription and no command ingress.
+ * Opt-in MQTT command ingress is restricted to PAUSE/STOP in DEMO mode.
  */
 class HaTelemetryService : Service() {
     private val main = Handler(Looper.getMainLooper())
@@ -147,15 +148,24 @@ class HaTelemetryService : Service() {
 
     /** Never execute remote commands in HARDWARE/TWIN mode, even after a mode change. */
     private fun handleDemoCommand(message: MqttPublisher.Received) {
-        if (!demoControlsAllowed() || message.retained ||
-            message.topic != HaMqttSchema.demoCommandTopic()) return
-        if (message.payload != "PAUSE" && message.payload != "STOP") return
-        main.post {
-            if (!demoControlsAllowed()) return@post
+        fun authorize(): DemoCommandPolicy.Action? {
             val s = machine.snapshot
-            if (!s.hasSample || !s.transportUp) return@post
-            if (message.payload == "PAUSE" && s.running) machine.pause {}
-            else if (message.payload == "STOP" && s.busy) machine.stop {}
+            return DemoCommandPolicy.authorize(
+                enabled = prefs.mqttDemoControlEnabled && prefs.mqttEnabled,
+                modeKey = prefs.mode.key,
+                sampleFresh = s.hasSample && s.transportUp &&
+                    s.sampleAgeMs in 0L..3_000L,
+                topic = message.topic, payload = message.payload,
+                retained = message.retained,
+            )
+        }
+        if (authorize() == null) return
+        main.post {
+            when (authorize()) {
+                DemoCommandPolicy.Action.PAUSE -> if (machine.snapshot.running) machine.pause {}
+                DemoCommandPolicy.Action.STOP -> if (machine.snapshot.busy) machine.stop {}
+                null -> Unit
+            }
         }
     }
 
