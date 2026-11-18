@@ -214,4 +214,13 @@ class Prefs(context: Context) {
         get() = p.getString("mqttPassword", "") ?: ""
         set(v) { p.edit().putString("mqttPassword", v).commit() }
 
+    /** Non-sensitive MQTT diagnostic written by the exporter and read by Settings. */
+    var mqttStatus: String
+        get() = p.getString("mqttStatus", "MQTT non avviato") ?: "MQTT non avviato"
+        set(v) { p.edit().putString("mqttStatus", v.take(240)).apply() }
+
+    var mqttStatusAt: Long
+        get() = p.getLong("mqttStatusAt", 0L)
+        set(v) { p.edit().putLong("mqttStatusAt", v).apply() }
+
 }
