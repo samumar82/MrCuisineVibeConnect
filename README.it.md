@@ -132,29 +132,18 @@ Lo stato mostra soltanto categorie di errori; non registra la password né la st
 
 Per verificare, usare soltanto **MQTT → Configura → Ascolta un topic** e il filtro `toque_it/mcc/#`. La pagina Zigbee2MQTT non mostrerà Toque: è un client MQTT non Zigbee.
 
-## Controllo remoto da Home Assistant — prima fase sperimentale
+## Controllo remoto Home Assistant: rimandato
 
-Con il nuovo firmware del fork si possono abilitare **esclusivamente in modalità Demo** due pulsanti MQTT Discovery: `Pausa Demo` e `Arresta Demo`. Sono **disattivati per impostazione predefinita**.
+**Il ramo principale `main` è intenzionalmente in sola lettura**: pubblica nove sensori via MQTT Discovery e non accetta topic di comando. L'utente ha verificato il funzionamento della telemetria in Home Assistant.
 
-Per testarli:
-1. scaricare un APK da una build verde successiva al commit dei comandi, sul **telefono in modalità Demo**;
-2. aprire Impostazioni → Home Assistant · MQTT;
-3. mantenere la pubblicazione MQTT attiva e selezionare **Comandi PAUSA/STOP solo in Demo (sperimentale)**;
-4. premere Salva configurazione MQTT e verificare in Home Assistant il dispositivo Monsieur Cuisine Connect;
-5. avviare *manualmente sul telefono* un programma simulato e premere i nuovi pulsanti HA per metterlo in pausa o arrestarlo.
-
-Il programma **non può essere avviato o ripreso remotamente**. La ricezione dei comandi è disabilitata in `Machine reale` e `Jumeau digitale`, anche se l'utente ha lasciato attiva l'opzione: il software applica un controllo sul modo corrente sia al momento della ricezione sia appena prima della chiamata IPC.
-
-La sottoscrizione MQTT usa soltanto `toque_it/mcc/demo/command`, QoS 0. Scarta messaggi retained e payload diversi da `PAUSE` e `STOP`. All'eventuale passaggio dalla modalità Demo alla modalità reale il codice rifiuta i comandi, ma **questa prima fase non va impiegata come arresto di emergenza di una macchina fisica**.
-
-Prima di valutare un controllo completo sulla macchina reale servono verifiche aggiuntive: autenticazione/TLS, account broker con ACL minime, controllo dell'età dei comandi e duplicati, indicazione dello stato di esecuzione, consenso locale temporaneo e test del comportamento con connessione assente. Un semplice pulsante remoto di avvio del riscaldamento o delle lame non è considerato sicuro.
-
-### Test di regressione controllo Demo
-
-Il test `DemoCommandPolicyTest` verifica che soltanto `PAUSE` e `STOP` siano autorizzati con consenso esplicito, in Demo, con dati recenti e su topic esatto. Le varianti retained, disabilitate, senza campioni, in modalità Hardware/Twin e i comandi `START`/`RESUME` vengono rifiutati.
+Il lavoro sperimentale su Pausa/Arresta Demo è conservato separatamente nel ramo [`esperimenti-controllo-ha`](https://github.com/samumar82/MrCuisineVibeConnect/tree/esperimenti-controllo-ha), non è parte del ramo principale e non deve essere utilizzato sul robot reale.
 
 ## Verifica ricette italiane (18 novembre 2026)
 
 Test nella Demo Android: l'utente ha scaricato il catalogo ufficiale e verificato che le ricette sono visualizzate in italiano. Il client usa `Accept-Language: it-IT` tramite `McOnline.languageFor("it")`. **Non occorre tradurre automaticamente il catalogo ufficiale**: il contenuto viene recuperato dalla fonte già localizzata. Il catalogo non è incluso in questo repository.
 
 È stata aggiunta una protezione per riconoscere anche la dicitura italiana *farfalla* o *frusta* nella conversione degli accessori indicati dalle ricette. Non vengono modificati tempi, temperature o velocità. È comunque obbligatoria la revisione dei passaggi importati prima di azionare una macchina fisica.
+
+## Baseline stabile
+
+Il ramo principale è stato riportato ai file MQTT in sola lettura dell'ultima revisione con CI verde e Demo confermata dall'utente, mantenendo le successive modifiche locali per l'italiano delle ricette. La compilazione del nuovo commit di ripristino deve essere verificata nel workflow `Validate Italian fork`.
