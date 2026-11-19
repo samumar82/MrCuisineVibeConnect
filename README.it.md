@@ -81,6 +81,14 @@ Per eseguire solo il backup, senza installare:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\installazione-rapida-it.ps1 -SoloBackup -ConfermoRobotFermo
 ~~~
 
+Per **verificare un backup già salvato**, senza robot collegato e senza cambiare alcun dato:
+
+~~~powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\installazione-rapida-it.ps1 -VerificaBackup "C:\Percorso\ToqueIT-AAAAMMGG-HHMMSS"
+~~~
+
+Il backup viene inoltre decrittato, autenticato e confrontato in memoria **automaticamente al momento della creazione**, prima di autorizzare l'aggiornamento.
+
 Il flag **-ConfermoRobotFermo** conferma che l'utente ha verificato visivamente il completo arresto. Non eseguire se ci sono programmi di cucina attivi. Dopo l'upgrade verificare il collegamento base motore, i 9 stati MQTT, l'italiano e la HOME predefinita.
 
 ### Primo impianto (robot non rootato)
