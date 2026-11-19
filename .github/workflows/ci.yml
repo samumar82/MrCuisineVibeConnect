@@ -55,3 +55,12 @@ jobs:
           name: toque-it-debug
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+  windows-backup-crypto:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise Windows DPAPI encrypted backup self-test
+        shell: powershell
+        run: |
+          & powershell -NoProfile -ExecutionPolicy Bypass -File tools\installazione-rapida-it.ps1 -Autotest
