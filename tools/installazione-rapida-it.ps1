@@ -126,8 +126,9 @@ function Load-ProtectedData([string]$directory) {
             $diff = $diff -bor ($tag[$i] -bxor $computed[$i])
         }
         if ($diff -ne 0) { throw "Backup manomesso o corrotto: verifica HMAC fallita." }
-        return ,[System.Security.Cryptography.ProtectedData]::Unprotect(
+        $archive = [System.Security.Cryptography.ProtectedData]::Unprotect(
             $cipher,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        return ,$archive
     } finally {
         if ($h) { $h.Dispose() }
         [Array]::Clear($key,0,$key.Length)
