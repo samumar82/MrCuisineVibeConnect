@@ -34,6 +34,19 @@ jobs:
           assert it["_name"] == "Italiano"
           print(f"Italian translation validated: {len(it)-1} UI strings")
           PY
+      - name: Validate quick installer scripts
+        shell: pwsh
+        run: |
+          $paths = @('tools/installazione-rapida-it.ps1', 'tools/install-robot.ps1', 'tools/setup/toque-setup.ps1')
+          foreach ($path in $paths) {
+            $tokens = $null; $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) { throw "PowerShell parse errors in $path`: $errors" }
+          }
+          Write-Host 'PowerShell syntax OK'
+      - name: POSIX script syntax
+        run: |
+          for path in tools/robot/setup-root.sh tools/robot/20-toque-root-policy.sh tools/robot/backup-data.sh tools/robot/restore-data.sh; do sh -n "$path"; done
       - name: Kotlin unit tests and Android debug APK
         run: ./gradlew --no-daemon :core:test :app:assembleDebug
       - name: Save debug APK (testing only)
