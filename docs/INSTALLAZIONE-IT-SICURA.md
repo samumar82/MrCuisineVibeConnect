@@ -20,7 +20,7 @@ Per backup senza upgrade:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\installazione-rapida-it.ps1 -SoloBackup -ConfermoRobotFermo
 ~~~
 
-**Backup:** contiene un file crittografato Windows DPAPI e l'APK precedente in chiaro, con manifest e hash. Funziona per restore dei dati Toque **solo con lo stesso profilo Windows e PC**. Non contiene backup integrale di Android, firmware, recovery o boot. Se il computer si guasta, una copia DPAPI trasferita su un altro computer non è sufficiente: conservarne anche una strategia di recupero offline e i backup partizione iniziali.
+**Backup:** contiene un file crittografato Windows DPAPI, un tag HMAC-SHA256 e una chiave HMAC protetta da DPAPI per rilevare manomissioni, oltre all'APK precedente in chiaro, con manifest e hash. Funziona per restore dei dati Toque **solo con lo stesso profilo Windows e PC**. Non contiene backup integrale di Android, firmware, recovery o boot. Se il computer si guasta, una copia DPAPI trasferita su un altro computer non è sufficiente: conservarne anche una strategia di recupero offline e i backup partizione iniziali.
 
 Restore dei dati: installare prima la stessa APK riportata dal manifest, poi lanciare l'opzione Ripristina descritta in [README.it.md](../README.it.md). Lo script crea un ulteriore backup prima di ripristinare i dati. Non eliminare l'APK vecchia prima della verifica.
 
