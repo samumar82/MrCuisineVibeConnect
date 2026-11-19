@@ -2,6 +2,11 @@
 
 **Fork indipendente** di [Wuki60/MrCuisineVibeConnect](https://github.com/Wuki60/MrCuisineVibeConnect), destinato al SilverCrest Monsieur Cuisine Connect SKMC 1200 (Android 6). Non ufficiale, licenza MIT, nessuna affiliazione con Lidl, SilverCrest o Hoyer.
 
+![Anteprima illustrativa di nove entità MQTT Home Assistant per Toque IT](docs/assets/toque-it-ha-preview.svg)
+
+*Anteprima illustrativa con dati simulati, non screenshot del dispositivo. Le 9 entità sono state effettivamente osservate in Home Assistant.*
+
+
 **[Installazione rapida](#installazione-rapida-con-backup-sicuro)** · **[Differenze](#differenze-dalloriginale)** · **[9 entità Home Assistant](#home-assistant-mqtt-9-entità)** · **[Verifiche e limiti](#verifiche-e-limiti)**
 
 > **Sicurezza**: Toque controlla motore e riscaldamento. Non usare durante modifiche o backup, non aggirare protezioni, non aprire il coperchio né estrarre il boccale con lame in movimento. Il software non è certificato dal costruttore.
