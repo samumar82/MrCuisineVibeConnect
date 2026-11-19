@@ -3,6 +3,7 @@ name: Publish Toque IT release
 
 on:
   push:
+    branches: [main]
     tags:
       - 'v*'
   workflow_dispatch:
