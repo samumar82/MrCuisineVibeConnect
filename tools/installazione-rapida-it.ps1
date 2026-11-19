@@ -6,6 +6,7 @@
 param(
     [string]$Apk = "",
     [switch]$SoloBackup,
+    [string]$VerificaBackup = "",
     [switch]$Autotest,
     [string]$Ripristina = "",
     [switch]$ConfermoRobotFermo,
@@ -154,6 +155,16 @@ function Backup-Toque {
     try {
         Validate-Gzip $raw
         Save-ProtectedData $raw $dir
+        $verified = Load-ProtectedData $dir
+        try {
+            Validate-Gzip $verified
+            $sha = [System.Security.Cryptography.SHA256]::Create()
+            try {
+                $first = [Convert]::ToBase64String($sha.ComputeHash($raw))
+                $second = [Convert]::ToBase64String($sha.ComputeHash($verified))
+                if ($first -ne $second) { throw "Backup non recuperabile: dati diversi!" }
+            } finally { $sha.Dispose() }
+        } finally { [Array]::Clear($verified,0,$verified.Length) }
         $protectedPath = Join-Path $dir "dati-toque.dpapi"
         $manifest = [ordered]@{
             schema = 1
@@ -282,6 +293,19 @@ if ($Autotest) {
     exit 0
 }
 
+if ($VerificaBackup) {
+    $dir = (Resolve-Path $VerificaBackup).Path
+    $manifest = Get-Content (Join-Path $dir "manifest.json") -Raw | ConvertFrom-Json
+    $protectedPath = Join-Path $dir "dati-toque.dpapi"
+    if ($manifest.schema -ne 1 -or $manifest.app -ne "app.toque" -or
+        (Get-FileHash $protectedPath -Algorithm SHA256).Hash -ne $manifest.encryptedSha256) {
+        throw "Manifest o checksum del backup non valido."
+    }
+    $data = Load-ProtectedData $dir
+    try { Validate-Gzip $data; Write-Host "BACKUP VERIFICATO: $dir" }
+    finally { [Array]::Clear($data,0,$data.Length) }
+    exit 0
+}
 if (!(Test-Path $adb)) { throw "ADB mancante. Installa Android Platform Tools." }
 if (!$ConfermoRobotFermo) {
     throw "Per sicurezza esegui solo a robot FERMO, senza motore o riscaldamento: aggiungi -ConfermoRobotFermo."
