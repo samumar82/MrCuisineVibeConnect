@@ -6,6 +6,7 @@
 param(
     [string]$Apk = "",
     [switch]$SoloBackup,
+    [switch]$Autotest,
     [string]$Ripristina = "",
     [switch]$ConfermoRobotFermo,
     [string]$CartellaBackup = (Join-Path $env:LOCALAPPDATA "ToqueIT\Backup")
@@ -195,6 +196,44 @@ function Restore-Data([string]$directory) {
         Adb @("shell","am start -n app.toque/.ui.MainActivity")
         Write-Host "RIPRISTINO DATI COMPLETATO. Verifica MQTT, ricette e avvio in Toque."
     } finally { [Array]::Clear($raw,0,$raw.Length) }
+}
+
+if ($Autotest) {
+    # No device required: validate gzip handling, DPAPI round trip and tamper detection.
+    Write-Host "===== AUTOTEST BACKUP CIFRATO ====="
+    $expected = [Text.Encoding]::UTF8.GetBytes(("TOQUE-IT-TEST " * 50))
+    $mem = New-Object System.IO.MemoryStream
+    try {
+        $gz = [System.IO.Compression.GzipStream]::new(
+            $mem,[System.IO.Compression.CompressionMode]::Compress,$true)
+        $gz.Write($expected,0,$expected.Length)
+        $gz.Dispose()
+        $plain = $mem.ToArray()
+        Validate-Gzip $plain
+        $protected = [System.Security.Cryptography.ProtectedData]::Protect(
+            $plain,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        $decrypted = [System.Security.Cryptography.ProtectedData]::Unprotect(
+            $protected,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        if (![System.Linq.Enumerable]::SequenceEqual([byte[]]$plain,[byte[]]$decrypted)) {
+            throw "DPAPI round-trip fallito"
+        }
+        $protected[10] = $protected[10] -bxor 7
+        $denied = $false
+        try {
+            [void][System.Security.Cryptography.ProtectedData]::Unprotect(
+                $protected,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        } catch {
+            $denied = $true
+        }
+        if (!$denied) { throw "DPAPI: manomissione non rilevata." }
+        Write-Host "AUTOTEST OK: gzip, DPAPI, integrity"
+    } finally {
+        $mem.Dispose()
+        if ($expected) { [Array]::Clear($expected,0,$expected.Length) }
+        if ($plain) { [Array]::Clear($plain,0,$plain.Length) }
+        if ($decrypted) { [Array]::Clear($decrypted,0,$decrypted.Length) }
+    }
+    exit 0
 }
 
 if (!(Test-Path $adb)) { throw "ADB mancante. Installa Android Platform Tools." }
