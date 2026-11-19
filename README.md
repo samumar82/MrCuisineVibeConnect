@@ -1,6 +1,8 @@
-# MrCuisineVibeConnect
+# Toque IT — Monsieur Cuisine Connect (Italian fork)
 
-🇮🇹 **[Versione italiana e roadmap Home Assistant](README.it.md)** · 🇫🇷 **[Version française](README.fr.md)**
+> Fork of [Wuki60/MrCuisineVibeConnect](https://github.com/Wuki60/MrCuisineVibeConnect). Added Italian UI, nine read-only Home Assistant MQTT entities, a firmware-4922 bowl-sensor fix and a rooted-device encrypted-backup installer. Original project and author credited; see [README italiano](README.it.md) for tested functionality and remaining cooking safety limits.
+
+🇮🇹 **[Fork italiano, 9 entità Home Assistant MQTT e installazione rapida](README.it.md)** · 🇫🇷 **[Version française](README.fr.md)**
 
 **Toque** is a fast, modern replacement interface for the Lidl **Monsieur Cuisine Connect**
 kitchen robot (SKMC 1200). It runs on the robot's own tablet instead of the stock app and still
@@ -14,13 +16,23 @@ uses **the official Lidl recipes**.
 > The interface is available in **English**, **French** and **Italian** (*Settings › Langue · Language*), and
 > other languages can be added with a single file (see below).
 
+## Fast update on an already rooted robot
+
+On Windows (ADB + Magisk already working), when the motor and heater are **physically idle**:
+
+~~~powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\installazione-rapida-it.ps1 -ConfermoRobotFermo
+~~~
+
+Downloads the latest APK **from this fork**, verifies its SHA-256, streams the current app settings/recipe database into a Windows DPAPI-encrypted backup, saves the old APK, installs the update and restores persistent Magisk root permission. Backup is bound to the **same Windows user and PC**. Not for initial root/firmware flashing. See [Italian instructions](README.it.md).
+
 ## Install with an AI agent
 
 The easiest way: let an AI agent that can operate your Windows PC (Claude, ChatGPT, Copilot…) do
 the install. Give it this message:
 
 > Install Toque on my Monsieur Cuisine Connect by following AGENTS.md in
-> https://github.com/Wuki60/MrCuisineVibeConnect
+> https://github.com/samumar82/MrCuisineVibeConnect
 
 [AGENTS.md](AGENTS.md) describes the whole procedure to the agent, and
 [`tools/setup/toque-setup.ps1`](tools/setup/toque-setup.ps1) does the work step by step (verified
@@ -59,7 +71,7 @@ Allow 1 to 2 hours. Without an agent: [docs/INSTALLATION.md](docs/INSTALLATION.m
 - **Made for a robot without Android buttons**: Toque opens at startup, and a **Back to Toque**
   button stays on top of the stock app when you open it.
 - **Updates from GitHub**: *Settings › Updates* checks this repository's
-  [Releases](https://github.com/Wuki60/MrCuisineVibeConnect/releases) and installs the new version
+  [Releases](https://github.com/samumar82/MrCuisineVibeConnect/releases) and installs the new version
   (silently on a rooted robot, then Toque restarts). Refused while a program is running.
 
 ## Safety: what changes compared to the stock app
