@@ -1,5 +1,8 @@
 # MrCuisineVibeConnect
 
+> **Fork italien** de [Wuki60/MrCuisineVibeConnect](https://github.com/Wuki60/MrCuisineVibeConnect) : interface en italien, 9 entités MQTT Home Assistant en lecture seule, correctif de détection du bol pour firmware 4922, sauvegarde chiffrée avant mise à jour. Pour les conditions de validation et l'installation rapide, voir [README.it.md](README.it.md). Les fonctions de cuisson et les sécurités dynamiques ne sont pas certifiées sur tous les appareils.
+
+
 🇬🇧 **[English version](README.md)**
 
 **Toque**, une interface moderne et rapide pour le robot **Monsieur Cuisine Connect** (SKMC 1200),

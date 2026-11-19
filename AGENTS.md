@@ -1,4 +1,9 @@
-# AGENTS.md: install Toque on a Monsieur Cuisine Connect
+# AGENTS.md: install Toque IT on a Monsieur Cuisine Connect
+
+**Already rooted?** Use the much shorter, backup-first Windows command in [README.it.md](README.it.md). It verifies a fork-release SHA-256, saves encrypted app data and the currently installed APK, then upgrades; it does not alter boot/recovery/system. Root installation still requires the full guarded procedure below.
+
+**Important fork distinction:** This fork adds nine read-only Home Assistant MQTT entities, Italian UI, hardware firmware-4922 bowl interpretation and persistent Magisk permission. It does not include a completed, certified cooking/interlock stress test for every robot. Use only releases from samumar82/MrCuisineVibeConnect.
+
 
 This file is for an AI agent (Claude, ChatGPT, Copilot…) that a person has pointed at this
 repository with a request such as *"Install Toque on my Monsieur Cuisine Connect"*. It is the
@@ -120,7 +125,7 @@ Ask the person before downloading (state the file names, sources and sizes: ~130
 | Magisk v31.0 | `https://github.com/topjohnwu/Magisk/releases/download/v31.0/Magisk-v31.0.apk` | `2c8a488b9a5293e578e95ae4f07e3c57aba4feec4a52ca4dd852a2692d6dd4e8` |
 | TWRP `hacks/recovery.img` | [EliasKotlyar/Monsieur-Cuisine-Connect-Hack](https://github.com/EliasKotlyar/Monsieur-Cuisine-Connect-Hack) | `fc9ac999fc3b0a6c0cb563f39359084a6fcc211aeb42e7b754990afa4b543d3e` |
 | Scatter `l706_dfbh_v_695scatter.txt` | same repository | `13b8260dba9e4efba874c09e35803af43cc69556ba0f1937226240b0ab318364` |
-| Toque `Toque-X.Y.Z.apk` | [latest release](https://github.com/Wuki60/MrCuisineVibeConnect/releases/latest) of this repository | (signed with the project key) |
+| Toque `Toque-X.Y.Z.apk` | [latest release](https://github.com/samumar82/MrCuisineVibeConnect/releases/latest) of this repository | (signed with the project key) |
 
 ### SP Flash Tool: console mode, and the GUI fallback
 
