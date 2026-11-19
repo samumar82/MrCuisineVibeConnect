@@ -337,7 +337,8 @@ class MachineController(
         }
         if (t.lidOpen) v += Violation("lid", tr("Fermez et verrouillez le couvercle"))
         if (t.errorDetected) v += Violation("board_error", Mcc.boardErrorMessage(t.errorCode))
-        if (config.requireBowl && !t.bowlNtcDetected) v += Violation("bowl", tr("Bol non détecté"))
+        if ((config.requireBowl || Mcc.requiresBowlInterlock(t.firmwareVersion)) && !t.bowlNtcDetected)
+            v += Violation("bowl", tr("Bol non détecté"))
         return v
     }
 
