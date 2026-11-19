@@ -82,6 +82,20 @@ object Mcc {
         85, 90, 95, 100, 105, 110, 115, 120, 125, 130,
     )
 
+    // Hardware observation on MCU firmware 4922: RX status 0x84 with bowl inserted,
+    // 0xC4 with bowl removed. Older firmware decodes bit 0x40 with normal polarity.
+    // Keep the correction firmware-specific; do not invert other devices.
+    private const val REVERSED_BOWL_NTC_FIRMWARE = 4922
+
+    fun bowlDetectedFromStatus(status: Int, firmwareVersion: Int): Boolean {
+        val ntcBitSet = (status and 0x40) != 0
+        return if (firmwareVersion == REVERSED_BOWL_NTC_FIRMWARE) !ntcBitSet else ntcBitSet
+    }
+
+    /** Do not allow starting without a detected bowl on the verified reversed-polarity board. */
+    fun requiresBowlInterlock(firmwareVersion: Int): Boolean =
+        firmwareVersion == REVERSED_BOWL_NTC_FIRMWARE
+
     private val ERROR_MAP = mapOf(1 to 1, 3 to 2, 4 to 3, 5 to 4, 6 to 5, 7 to 12, 8 to 13)
 
     fun celsiusForLevel(level: Int): Int = TEMPERATURE_LEVELS[level.coerceIn(0, 19)]
@@ -199,7 +213,7 @@ object Mcc {
             errorCode = u(5),
             androidErrorCode = if (error) ERROR_MAP[u(5)] ?: 6 else 0,
             aboveTargetTemperature = status and 0x20 != 0,
-            bowlNtcDetected = status and 0x40 != 0,
+            bowlNtcDetected = bowlDetectedFromStatus(status, word(20)),
             lidOpen = status and 0x80 != 0,
             extendedState = u(4),
             targetSpeedLevel = u(6),
