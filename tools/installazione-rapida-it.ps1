@@ -83,6 +83,57 @@ function Validate-Gzip([byte[]]$bytes) {
         if ($total -lt 512) { throw "Archivio vuoto." }
     } finally { $gz.Dispose(); $m.Dispose() }
 }
+function Save-ProtectedData([byte[]]$archive,[string]$directory) {
+    # Confidentiality: DPAPI CurrentUser. Authenticity: HMAC-SHA256 with a
+    # random HMAC key also protected by DPAPI; do NOT trust a naked file hash.
+    $key = New-Object byte[] 32
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $rng.GetBytes($key)
+    $rng.Dispose()
+    $h = $null
+    try {
+        $cipher = [System.Security.Cryptography.ProtectedData]::Protect(
+            $archive,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        $sealedKey = [System.Security.Cryptography.ProtectedData]::Protect(
+            $key,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        $h = [System.Security.Cryptography.HMACSHA256]::new($key)
+        $tag = $h.ComputeHash($cipher)
+        [IO.File]::WriteAllBytes((Join-Path $directory "dati-toque.dpapi"),$cipher)
+        [IO.File]::WriteAllBytes((Join-Path $directory "chiave-hmac.dpapi"),$sealedKey)
+        [IO.File]::WriteAllBytes((Join-Path $directory "dati-toque.hmac"),$tag)
+    } finally {
+        if ($h) { $h.Dispose() }
+        [Array]::Clear($key,0,$key.Length)
+        if ($cipher) { [Array]::Clear($cipher,0,$cipher.Length) }
+        if ($sealedKey) { [Array]::Clear($sealedKey,0,$sealedKey.Length) }
+    }
+}
+function Load-ProtectedData([string]$directory) {
+    $cipher = [IO.File]::ReadAllBytes((Join-Path $directory "dati-toque.dpapi"))
+    $tag = [IO.File]::ReadAllBytes((Join-Path $directory "dati-toque.hmac"))
+    $key = [System.Security.Cryptography.ProtectedData]::Unprotect(
+        [IO.File]::ReadAllBytes((Join-Path $directory "chiave-hmac.dpapi")),
+        $null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    $h = $null
+    try {
+        $h = [System.Security.Cryptography.HMACSHA256]::new($key)
+        $computed = $h.ComputeHash($cipher)
+        if ($computed.Length -ne 32 -or $tag.Length -ne 32) {
+            throw "Backup danneggiato: tag HMAC non valido."
+        }
+        $diff = 0
+        for ($i=0; $i -lt 32; $i++) {
+            $diff = $diff -bor ($tag[$i] -bxor $computed[$i])
+        }
+        if ($diff -ne 0) { throw "Backup manomesso o corrotto: verifica HMAC fallita." }
+        return ,[System.Security.Cryptography.ProtectedData]::Unprotect(
+            $cipher,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    } finally {
+        if ($h) { $h.Dispose() }
+        [Array]::Clear($key,0,$key.Length)
+        [Array]::Clear($cipher,0,$cipher.Length)
+    }
+}
 function Backup-Toque {
     Write-Host "===== BACKUP PRIVATO + APK ORIGINALE ====="
     $version = Current-Version
@@ -101,11 +152,8 @@ function Backup-Toque {
     $raw = ADB-StreamBytes "backup-data.sh"
     try {
         Validate-Gzip $raw
-        $enc = [System.Security.Cryptography.ProtectedData]::Protect(
-            $raw, $null, [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        Save-ProtectedData $raw $dir
         $protectedPath = Join-Path $dir "dati-toque.dpapi"
-        [System.IO.File]::WriteAllBytes($protectedPath,$enc)
-        [Array]::Clear($enc,0,$enc.Length)
         $manifest = [ordered]@{
             schema = 1
             app = "app.toque"
@@ -168,9 +216,7 @@ function Restore-Data([string]$directory) {
     # Always keep a fresh rollback before restoring older app data.
     $safety = Backup-Toque
     Write-Host "Backup di sicurezza prima del restore: $safety"
-    $raw = [System.Security.Cryptography.ProtectedData]::Unprotect(
-        [IO.File]::ReadAllBytes($protectedPath),$null,
-        [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+    $raw = Load-ProtectedData $dir
     try {
         Validate-Gzip $raw
         Push-RootScript "restore-data.sh"
@@ -203,6 +249,8 @@ if ($Autotest) {
     Write-Host "===== AUTOTEST BACKUP CIFRATO ====="
     $expected = [Text.Encoding]::UTF8.GetBytes(("TOQUE-IT-TEST " * 50))
     $mem = New-Object System.IO.MemoryStream
+    $temp = Join-Path $env:TEMP ("ToqueIT-selftest-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Force -Path $temp | Out-Null
     try {
         $gz = [System.IO.Compression.GzipStream]::new(
             $mem,[System.IO.Compression.CompressionMode]::Compress,$true)
@@ -210,25 +258,22 @@ if ($Autotest) {
         $gz.Dispose()
         $plain = $mem.ToArray()
         Validate-Gzip $plain
-        $protected = [System.Security.Cryptography.ProtectedData]::Protect(
-            $plain,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-        $decrypted = [System.Security.Cryptography.ProtectedData]::Unprotect(
-            $protected,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+        Save-ProtectedData $plain $temp
+        $decrypted = Load-ProtectedData $temp
         if (([Convert]::ToBase64String($plain) -ne [Convert]::ToBase64String($decrypted))) {
-            throw "DPAPI round-trip fallito"
+            throw "Round-trip cifratura fallito"
         }
-        $protected[10] = $protected[10] -bxor 7
+        $cipherFile = Join-Path $temp "dati-toque.dpapi"
+        $tampered = [IO.File]::ReadAllBytes($cipherFile)
+        $tampered[10] = $tampered[10] -bxor 7
+        [IO.File]::WriteAllBytes($cipherFile,$tampered)
         $denied = $false
-        try {
-            [void][System.Security.Cryptography.ProtectedData]::Unprotect(
-                $protected,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-        } catch {
-            $denied = $true
-        }
-        if (!$denied) { throw "DPAPI: manomissione non rilevata." }
-        Write-Host "AUTOTEST OK: gzip, DPAPI, integrity"
+        try { [void](Load-ProtectedData $temp) } catch { $denied = $true }
+        if (!$denied) { throw "HMAC non ha rilevato la manomissione." }
+        Write-Host "AUTOTEST OK: gzip, DPAPI, HMAC-SHA256, tamper rejection"
     } finally {
         $mem.Dispose()
+        Remove-Item -Force -Recurse $temp -ErrorAction SilentlyContinue
         if ($expected) { [Array]::Clear($expected,0,$expected.Length) }
         if ($plain) { [Array]::Clear($plain,0,$plain.Length) }
         if ($decrypted) { [Array]::Clear($decrypted,0,$decrypted.Length) }
