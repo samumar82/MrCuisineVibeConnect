@@ -8,6 +8,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class UpdateTest {
+    @Test fun forkReleaseChannel() {
+        assertEquals("samumar82/MrCuisineVibeConnect", Releases.REPO)
+        assertTrue(Releases.LATEST_URL.contains("samumar82/MrCuisineVibeConnect"))
+    }
+
     @Test fun compareVersions() {
         assertTrue(Releases.isNewer("v0.2.0", "0.1.0"))
         assertTrue(Releases.isNewer("0.10.0", "0.9.9"))
