@@ -8,6 +8,7 @@ import app.toque.core.protocol.Operation
 import app.toque.core.protocol.Telemetry
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
@@ -87,6 +88,41 @@ class ProtocolTest {
         assertTrue(p.invalidFrames > 0)
         p.feed(ByteArray(10_000) { 0x55 })
         assertTrue(p.bufferedBytes <= 26)
+    }
+
+    private fun bowlSample(status: Int, firmwareVersion: Int, temperature: Int): ByteArray {
+        val frame = ByteArray(Mcc.RX_SIZE)
+        frame[0] = 0x55
+        frame[1] = Mcc.RX_SIZE.toByte()
+        frame[2] = 0xB1.toByte()
+        frame[3] = status.toByte()
+        frame[14] = (temperature shr 8).toByte()
+        frame[15] = temperature.toByte()
+        frame[20] = (firmwareVersion shr 8).toByte()
+        frame[21] = firmwareVersion.toByte()
+        frame[22] = 0x02
+        frame[25] = Mcc.checksum(frame, 25).toByte()
+        frame[26] = 0xAA.toByte()
+        return frame
+    }
+
+    @Test fun firmware4922UsesInvertedBowlPresenceBit() {
+        // Observed on the real machine: 0x84 = inserted, 0xC4 = removed.
+        val inserted = Mcc.decodeRx(bowlSample(0x84, 4922, 37))
+        val removed = Mcc.decodeRx(bowlSample(0xC4, 4922, 0))
+        assertEquals(4922, inserted.firmwareVersion)
+        assertTrue(inserted.bowlNtcDetected)
+        assertFalse(removed.bowlNtcDetected)
+        assertEquals(37, inserted.actualTemperature)
+        assertTrue(Mcc.requiresBowlInterlock(4922))
+    }
+
+    @Test fun otherFirmwaresRetainOriginalBowlPolarity() {
+        val withoutBit = Mcc.decodeRx(bowlSample(0x84, 5016, 37))
+        val withBit = Mcc.decodeRx(bowlSample(0xC4, 5016, 37))
+        assertFalse(withoutBit.bowlNtcDetected)
+        assertTrue(withBit.bowlNtcDetected)
+        assertFalse(Mcc.requiresBowlInterlock(5016))
     }
 
     @Test fun temperatureTable() {

@@ -44,16 +44,17 @@ class SyncAlarm : BroadcastReceiver() {
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(c: Context, intent: Intent) {
+        // Respect the reversible 'Back to stock app' setting: never take the motor
+        // service or restart scheduled work while Toque autostart is disabled.
+        if (intent.action != Intent.ACTION_BOOT_COMPLETED || !Prefs(c).bootLaunch) return
         SyncService.schedule(c)
         c.startService(Intent(c, MachineService::class.java))
-        if (Prefs(c).bootLaunch) {
-            // Le robot n'a pas de bouton Accueil : Toque s'ouvre tout seul au démarrage, puis repasse
-            // devant 20 s plus tard au cas où l'appli d'origine (écran d'accueil) se serait ouverte après lui.
-            val open = Intent(c, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            c.startActivity(open)
-            val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            am.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 20_000,
-                PendingIntent.getActivity(c, 1, open, PendingIntent.FLAG_UPDATE_CURRENT))
-        }
+        // Le robot n'a pas de bouton Accueil : Toque s'ouvre tout seul au démarrage, puis repasse
+        // devant 20 s plus tard au cas où l'appli d'origine (écran d'accueil) se serait ouverte après lui.
+        val open = Intent(c, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        c.startActivity(open)
+        val am = c.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        am.set(AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + 20_000,
+            PendingIntent.getActivity(c, 1, open, PendingIntent.FLAG_UPDATE_CURRENT))
     }
 }
