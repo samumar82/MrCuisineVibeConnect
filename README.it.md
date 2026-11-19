@@ -67,7 +67,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\installazione-rapida
 
 Lo script accetta un solo dispositivo ADB, scarica **esclusivamente la release del fork**, ne confronta il checksum SHA-256 con il file SHA256SUMS.txt della release, esegue il backup e poi installa senza cancellare dati. Non effettua rooting, non flasha il firmware, non tocca l'app Lidl.
 
-Prima dell'aggiornamento salva **l'APK precedente** e una copia **cifrata** di impostazioni (incluse credenziali MQTT), database ricette e preferiti e file locali. Destinazione standard: cartella privata di Windows **%LOCALAPPDATA%\ToqueIT\Backup**. La crittografia è **Windows DPAPI CurrentUser**: il ripristino è possibile solo dallo **stesso utente Windows sullo stesso computer**. Non è un backup portatile né un backup delle partizioni Android.
+Prima dell'aggiornamento salva **l'APK precedente** e una copia **cifrata** di impostazioni (incluse credenziali MQTT), database ricette e preferiti e file locali. Destinazione standard: cartella privata di Windows **%LOCALAPPDATA%\ToqueIT\Backup**. La crittografia è **Windows DPAPI CurrentUser**, con **HMAC-SHA256 autenticato** e chiave protetta da DPAPI per rilevare alterazioni: il ripristino è possibile solo dallo **stesso utente Windows sullo stesso computer**. Non è un backup portatile né un backup delle partizioni Android.
 
 Per usare un'APK locale:
 
