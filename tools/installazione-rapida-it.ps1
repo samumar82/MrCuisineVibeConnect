@@ -66,7 +66,7 @@ function ADB-StreamBytes([string]$remoteScript) {
         if ($p.ExitCode -ne 0) {
             throw "Backup dispositivo fallito: $($p.StandardError.ReadToEnd())"
         }
-        return $mem.ToArray()
+        return ,$mem.ToArray()
     } finally {
         $mem.Dispose()
         $p.Dispose()
