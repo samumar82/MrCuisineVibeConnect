@@ -214,7 +214,7 @@ if ($Autotest) {
             $plain,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
         $decrypted = [System.Security.Cryptography.ProtectedData]::Unprotect(
             $protected,$null,[System.Security.Cryptography.DataProtectionScope]::CurrentUser)
-        if (![System.Linq.Enumerable]::SequenceEqual([byte[]]$plain,[byte[]]$decrypted)) {
+        if (([Convert]::ToBase64String($plain) -ne [Convert]::ToBase64String($decrypted))) {
             throw "DPAPI round-trip fallito"
         }
         $protected[10] = $protected[10] -bxor 7
