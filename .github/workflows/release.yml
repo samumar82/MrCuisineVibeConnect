@@ -1,15 +1,17 @@
-# Publishes a Toque release automatically when versionName changes in app/build.gradle.kts.
-# Robots then find it in Settings › Updates.
-name: Publish a release
+# Signed fork release: artifacts are built by Actions, not uploaded unverified.
+name: Publish Toque IT release
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: release
+  group: release-toque-it
   cancel-in-progress: false
 
 jobs:
@@ -19,37 +21,57 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: App version
+      - name: Validate version and tag
         id: version
+        shell: bash
         run: |
+          set -euo pipefail
           v=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
-          echo "name=$v" >> "$GITHUB_OUTPUT"
-          if git rev-parse -q --verify "refs/tags/v$v" >/dev/null; then
-            echo "Version $v is already published: nothing to do."
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
+          test -n "$v"
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$v" ]]; then
+            echo "::error::Tag must match app/build.gradle.kts: v$v"
+            exit 1
           fi
-
+          echo "name=$v" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-java@v4
-        if: steps.version.outputs.publish == 'true'
         with:
           distribution: temurin
-          java-version: 17
-
-      - name: Tests and build
-        if: steps.version.outputs.publish == 'true'
+          java-version: '17'
+      - name: Kotlin tests and signed Android APK
         run: ./gradlew --no-daemon :core:test :app:assembleRelease
-
-      - name: Publish on GitHub
-        if: steps.version.outputs.publish == 'true'
+      - name: Package APK with SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          v="${{ steps.version.outputs.name }}"
+          cp app/build/outputs/apk/release/app-release.apk "dist/Toque-IT-$v.apk"
+          (cd dist && sha256sum "Toque-IT-$v.apk" > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+      - name: Save release candidate APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: toque-it-release-candidate
+          path: dist/
+          if-no-files-found: error
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
+          set -euo pipefail
           v="${{ steps.version.outputs.name }}"
-          cp app/build/outputs/apk/release/app-release.apk "Toque-$v.apk"
-          prev=$(git describe --tags --abbrev=0 2>/dev/null || true)
-          if [ -n "$prev" ]; then range="$prev..HEAD"; else range="HEAD"; fi
-          git log --no-merges --pretty='- %s' $range > notes.md
-          gh release create "v$v" "Toque-$v.apk" --title "Toque $v" --notes-file notes.md --target "$GITHUB_SHA"
+          if gh release view "v$v" >/dev/null 2>&1; then
+            echo "Release v$v already exists; refusing to overwrite assets."
+            exit 0
+          fi
+          {
+            echo "## Toque IT $v"
+            echo
+            echo "Fork italiano di Wuki60/MrCuisineVibeConnect: interfaccia italiana, MQTT solo lettura, firmware 4922 e backup/restore."
+            echo
+            echo "**Validazione:** test automatici su questa build; prove fisiche su un SKMC1200 firmware 4922 con la 0.5.1 (boot, root, presenza boccale, sensori e MQTT). Nessuna certificazione del riscaldamento o degli interblocchi dinamici."
+            echo
+            echo "Verificare il file SHA256SUMS.txt allegato. Vedere README.it.md per installazione e ripristino."
+          } > notes.md
+          gh release create "v$v" "dist/Toque-IT-$v.apk" "dist/SHA256SUMS.txt" --title "Toque IT $v" --notes-file notes.md --target "$GITHUB_SHA"
