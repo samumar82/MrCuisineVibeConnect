@@ -24,7 +24,7 @@ On Windows (ADB + Magisk already working), when the motor and heater are **physi
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\installazione-rapida-it.ps1 -ConfermoRobotFermo
 ~~~
 
-Downloads the latest APK **from this fork**, verifies its SHA-256, streams the current app settings/recipe database into a Windows DPAPI-encrypted backup, saves the old APK, installs the update and restores persistent Magisk root permission. Backup is bound to the **same Windows user and PC**. Not for initial root/firmware flashing. See [Italian instructions](README.it.md).
+Downloads the latest APK **from this fork**, verifies its SHA-256, streams the current app settings/recipe database into a Windows DPAPI-encrypted, HMAC-authenticated backup, saves the old APK, installs the update and restores persistent Magisk root permission. Backup is bound to the **same Windows user and PC**. Not for initial root/firmware flashing. See [Italian instructions](README.it.md).
 
 ## Install with an AI agent
 
