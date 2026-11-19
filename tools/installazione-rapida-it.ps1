@@ -74,7 +74,7 @@ function ADB-StreamBytes([string]$remoteScript) {
 }
 function Validate-Gzip([byte[]]$bytes) {
     $m = New-Object System.IO.MemoryStream (,$bytes)
-    $gz = New-Object System.IO.Compression.GzipStream($m,[System.IO.Compression.CompressionMode]::Decompress)
+    $gz = [System.IO.Compression.GzipStream]::new($m,[System.IO.Compression.CompressionMode]::Decompress)
     try {
         $buf = New-Object byte[] 65536
         $total = 0
