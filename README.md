@@ -48,7 +48,7 @@ Con MQTT Discovery il Monsieur Cuisine compare in Home Assistant come dispositiv
 | **Avvio automatico** | Toque come Home all'accensione, con possibilità di tornare all'app Lidl |
 | **Magisk persistente** | Root autorizzato dopo spegnimento/riaccensione, senza popup ripetuti |
 | **Upgrade con backup** | Salva vecchia APK, impostazioni, ricette e preferiti prima di aggiornare |
-| **Cottura upstream** | Cottura manuale e guidata, bilancia e programmi del progetto originale; il proprietario dichiara di averne eseguito i test funzionali |
+| **Cottura upstream** | Cottura manuale e guidata, bilancia e programmi del progetto originale; il proprietario conferma di averne testato tutte le funzioni con esito positivo |
 
 **Ricette:** l'interfaccia è in italiano, ma il testo delle ricette mantiene la lingua effettivamente offerta dalla fonte. Nessuna traduzione automatica dei parametri macchina.
 
@@ -74,7 +74,7 @@ Lo script scarica solo l'ultima release di **questo fork**, verifica SHA-256, sa
 
 Su un singolo SKMC 1200 Android 6 / MCU 4922 sono stati verificati in precedenza: installazione e avvio HOME, root permanente dopo cold boot, collegamento della scheda motore, rilevamento boccale inserito/rimosso, lettura della temperatura con acqua tiepida e **9 entità MQTT visibili in HA**.
 
-**Aggiornamento del 24 novembre 2026 — dichiarazione del proprietario:** sono stati eseguiti test di **tutte le funzionalità** del progetto sul robot. La dichiarazione aggiorna la copertura delle prove, ma non include in questo repository un verbale con risultato, misure e condizioni di ogni test; pertanto **non equivale a confermare che ogni test sia stato superato**, né a certificare il funzionamento sotto ogni carico o la sicurezza degli interblocchi dinamici. La copertura dettagliata e gli esiti restano da documentare. I test automatici del codice rimangono distinti dai test sul dispositivo.
+**Aggiornamento del 24 novembre 2026 — collaudo funzionale dichiarato dal proprietario:** tutte le funzionalità del progetto sono state testate sul robot reale e **il proprietario conferma esito positivo per tutte le prove eseguite, senza anomalie segnalate**. La conferma riguarda un solo dispositivo e non è accompagnata da verbali, log o misurazioni individuali; non equivale a una certificazione indipendente, né dimostra il comportamento in ogni condizione operativa o di guasto. I test automatici del codice rimangono distinti dai test sul dispositivo.
 
 Non bypassare mai coperchio o altri dispositivi di sicurezza. Uso a proprio rischio: progetto non affiliato a Lidl, SilverCrest o Hoyer.
 
