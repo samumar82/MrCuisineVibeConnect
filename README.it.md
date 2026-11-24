@@ -60,7 +60,9 @@ Evidenze raccolte su **un solo SKMC 1200 Android 6 / firmware MCU 4922**:
 - MQTT funzionante, nove entità Home Assistant visibili, riavvio del servizio dopo cold boot.
 - Orologio sincronizzato automaticamente, talvolta con ritardo iniziale.
 
-**Cottura**: Toque mantiene le funzioni originali dell'upstream di cottura manuale/guidata, vapore, programmi, bilancia e controlli software del motore. I test automatici coprono protocollo, logica di controllo e condizioni di sicurezza. **Non è documentato un collaudo completo di riscaldamento reale e interblocchi dinamici sotto carico per la 0.5.2**. La build non è una certificazione di sicurezza; la rimozione del nome storico UNTESTED non cambia questi limiti.
+**Aggiornamento del 24 novembre 2026 — test del proprietario:** il proprietario del robot dichiara di avere **testato tutte le funzionalità** di Toque IT. Questo aggiorna la precedente indicazione di copertura incompleta dei test funzionali. Non sono però stati forniti, per ciascuna funzione, un esito PASS/FAIL, misure, condizioni di prova o log allegati: **l'esecuzione di tutti i test non implica che tutti siano stati superati**. In particolare non è pubblicato un verbale che permetta di certificare il comportamento degli interblocchi dinamici sotto carico o la sicurezza della cottura reale per la 0.5.2.
+
+Toque mantiene le funzioni upstream di cottura manuale/guidata, vapore, programmi, bilancia e controlli software del motore; i test automatici coprono protocollo, logica di controllo e condizioni di sicurezza. La build e la rimozione del nome storico UNTESTED **non costituiscono una certificazione di sicurezza**. La segnalazione del proprietario è una prova dichiarata su un solo dispositivo, non una validazione indipendente.
 
 ## Installazione rapida con backup sicuro
 
