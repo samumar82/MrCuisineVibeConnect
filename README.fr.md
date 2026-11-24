@@ -1,6 +1,6 @@
 # MrCuisineVibeConnect
 
-> **Fork italien** de [Wuki60/MrCuisineVibeConnect](https://github.com/Wuki60/MrCuisineVibeConnect) : interface en italien, 9 entités MQTT Home Assistant en lecture seule, correctif de détection du bol pour firmware 4922, sauvegarde chiffrée avant mise à jour. Le propriétaire a déclaré le **24 novembre 2026** avoir testé **toutes les fonctionnalités** sur son robot. Les résultats détaillés, mesures et journaux de chaque essai n'étant pas publiés, cette déclaration **ne prouve pas que tous les tests ont réussi** et ne constitue pas une certification des fonctions de cuisson ou des sécurités dynamiques. Pour les conditions de validation et l'installation rapide, voir [README.it.md](README.it.md).
+> **Fork italien** de [Wuki60/MrCuisineVibeConnect](https://github.com/Wuki60/MrCuisineVibeConnect) : interface en italien, 9 entités MQTT Home Assistant en lecture seule, correctif de détection du bol pour firmware 4922, sauvegarde chiffrée avant mise à jour. Le propriétaire a confirmé le **24 novembre 2026** avoir testé **toutes les fonctionnalités avec succès**, sans anomalie signalée, sur son robot. Cette validation fonctionnelle déclarée concerne un seul appareil ; les mesures et journaux détaillés ne sont pas publiés. Elle ne constitue pas une certification indépendante des fonctions de cuisson ou des sécurités dynamiques. Pour les conditions de validation et l'installation rapide, voir [README.it.md](README.it.md).
 
 
 🇬🇧 **[English version](README.md)**
